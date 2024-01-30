@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Schedule</title>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://code.jquery.com/jquery-3.6.0.min.js"
+      integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+      crossorigin="anonymous"
+    ></script>
+    <script src="jquery.repeater.min.js"></script>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+      crossorigin="anonymous"
+    />
+    <style>
+      .hidden {
+        display: block;
+      }
+    </style>
+
+    <script>
+      function updateHiddenEndTime() {
+          // Get the selected value from the End Time dropdown
+          var endTime = $("#end-time").val();
+
+          // Set the value to the hidden input field
+          $("#hidden-endingTime").val(endTime);
+      }
+
+      function updateEndTime() {
+        // Get the selected value from the Start Time dropdown
+        var startTime = $("#start-time").val();
+
+        // Clear the existing options in the End Time dropdown
+        $("#end-time").empty();
+
+        // Add new options to the End Time dropdown based on the selected Start Time
+        var endTimeOptions = generateEndTimeOptions(startTime);
+
+        // Append the new options to the End Time dropdown
+        $("#end-time").append(endTimeOptions);
+
+        // Trigger the updateHiddenEndTime function to set the initial value
+        updateHiddenEndTime();
+      }
+
+      function generateEndTimeOptions(startTime) {
+        // Sample logic: End times are 1 hour and 30 minutes later than start times
+        var startTimeObj = new Date("2000-01-01 " + startTime);
+        startTimeObj.setHours(startTimeObj.getHours() + 1, startTimeObj.getMinutes() + 30);
+
+        var endTimeOptions = "";
+
+        // Create options for the next 12 time slots
+        for (var i = 1; i <= 12; i++) {
+            var endTimeValue = startTimeObj.toTimeString().slice(0, 8); // Extract HH:mm
+            var endTimeText = startTimeObj.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'});
+
+            endTimeOptions += `<option value="${endTimeValue}">${endTimeText} </option>`;
+
+            startTimeObj.setHours(startTimeObj.getHours() + 1, startTimeObj.getMinutes() + 30);
+        }
+
+        return endTimeOptions;
+      }
+    </script>
+
+    <script>
+      function loadCourseInformation(){
+
+      }
+    </script>
+
+  </head>
+  <body class="bg-tertiary">
+    {% block content %}
+    <form method="POST">
+      <nav class="navbar navbar-expand-lg bg-primary-subtle">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="#">Home</a>
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav navbar-right me-auto mb-2 mb-lg-0">
+              <li class="nav-item">
+                <a class="nav-link active" aria-current="page" href="#"
+                  >Logout</a
+                >
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+
+      <div class="container">
+        <div class="row mt-4">
+          <div class="col-3"></div>
+          <div class="alert alert-info col-6" role="alert">
+            <h5>Welcome Mr. Juan T. Dela Cruz!</h5>
+            Your schedule is available. Please see the table below.
+          </div>
+          <div class="col-3"></div>
+        </div>
+
+        <div class="container">
+          <div class="row gx-3">
+            <div class="col-4">
+              <div class="bg-primary-subtle p-4">
+                <h3 class="text-center">Professor Details</h3>
+                <div class="form-floating">
+                  <select
+                    id="profDetails"
+                    class="form-select"
+                    name="professorDetails"
+                    style="height: 70px"
+                    onchange="hideDiv()"
+                  >
+                    {% for professors in professorData %}
+                    <option value="{{ professors[0] }}" {% if professors[0] == current_professor %} selected="selected" {% endif %}>
+                      {{ professors[1] }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                  <label for="profDetails">Professor Name</label>
+                </div>
+                <div class="pt-4 text-center">
+                  <button
+                    type="submit"
+                    name="btn"
+                    value="checkProfessorSchedule"
+                    class="btn btn-secondary"
+                    onclick="hideDiv()"
+                  >
+                    Check Schedule
+                  </button>
+                </div>
+
+                <script>
+                  function hideDiv(){
+                    var professorHolderVariable = "{{ current_professor }}";
+                    var dropdown = document.getElementById("profDetails");
+                    var selectedValue = dropdown.value;
+                    var hiddenDiv = document.getElementById("hiddenDiv");
+
+                    if (selectedValue != professorHolderVariable){
+                      hiddenDiv.style.display = "none";
+                    }
+                  }
+                </script>
+
+                <div class="pt-3 hidden" id="hiddenDiv">
+                {% if current_professor != 0 %}
+                  <div class="row">
+                    <div class="col-6">
+                      <div class="form-floating mb-3">
+                        <input
+                          type="text"
+                          class="form-control"
+                          id="floatingInput"
+                          name="courseSection"
+                          placeholder="OACC1"
+                        />
+                        <label for="floatingInput">Course Section</label>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="form-floating mb-3">
+                        <select
+                          id="current_course"
+                          class="form-select"
+                          name="currentCourse"
+                        >
+                          <option selected>None selected</option>
+                          {% for prof_courses in courseData %}
+                            <option value="{{prof_courses[0]}}">{{ prof_courses[0] }}</option>
+                          {% endfor %}
+                        </select>
+                        <label for="current_course">Course to be scheduled</label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-6 mb-3">
+                      <div class="form-floating">
+                        <select class="form-select" id="start-time" name="startTime" onchange="updateEndTime()">
+                          <option value="default" selected >Select Start Time</option>
+                          <option value="07:30:00">7:30 AM</option>
+                          <option value="09:00:00">9:00 AM</option>
+                          <option value="10:30:00">10:30 AM</option>
+                          <option value="12:00:00">12:00 PM</option>
+                          <option value="13:30:00">01:30 PM</option>
+                          <option value="15:00:00">03:00 PM</option>
+                        </select>
+                        <label for="floatingPassword">Start Time</label>
+                      </div>
+                    </div>
+
+                    <div class="col-6 mb-3">
+                      <div class="form-floating">
+                        <select class="form-select" id="end-time" onchange="updateHiddenEndTime()" disabled>
+                          <option value="default" selected disabled>Select End Time</option>
+                          <!-- Options will be dynamically populated based on the selected Start Time -->
+                        </select>
+                        <label for="floatingPassword">End Time</label>
+                      </div>
+                    </div>
+
+                    <!-- Hidden input to store the value of the End Time dropdown -->
+                    <input type="hidden" id="hidden-endingTime" name="endingTime">
+
+                  </div>
+
+
+                  <div class="row">
+                    <div class="col-6 mb-3">
+                      <div class="form-floating">
+                        <div class="form-floating">
+                          <input
+                            type="text"
+                            class="form-control"
+                            id="floatingInput"
+                            name="courseRoom"
+                            placeholder="Room"
+                          />
+                          <label for="floatingInput">Room</label>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                      <div class="form-floating">
+                        <select class="form-select" name="dayOfWeek">
+                          <option value="Monday">Monday</option>
+                          <option value="Tuesday">Tuesday</option>
+                          <option value="Wednesday">Wednesday</option>
+                          <option value="Thursday">Thursday</option>
+                          <option value="Friday">Friday</option>
+                          <option value="Saturday">Saturday</option>
+                        </select>
+                        <label for="floatingPassword">Day of Week</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="text-center">
+                    <button
+                      type="submit"
+                      name="btn"
+                      value="manageCourse"
+                      class="btn btn-primary"
+                    >
+                      Confirm Changes
+                    </button>
+                  </div>
+
+                {% endif %}
+                </div>
+              </div>
+            </div>
+            <div class="col-8">
+              <div class="bg-primary-subtle p-4">
+                {% for prof in professorData if prof[0] == current_professor %}
+                  <h3 class="text-center">Schedule for <u>{{prof[1]}}</u></h3>
+                {% endfor %}
+
+                <div class="container">
+                  
+                  <!-- TABLE HTML CODE (IT'S NOT EFFICIENT, BUT IT WORKS, PLEASE EDIT WITH CAUTION!)-->
+
+                  <table class="table table-striped table-sm text-center mt-4">
+                    <thead>
+                      <tr>
+                        <th scope="col">Time</th>
+                        <th scope="col">Monday</th>
+                        <th scope="col">Tuesday</th>
+                        <th scope="col">Wednesday</th>
+                        <th scope="col">Thursday</th>
+                        <th scope="col">Friday</th>
+                        <th scope="col">Saturday</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">7:30 AM - 9:00 AM</th>
+                        {% for sched in scheduleData if sched[5] == 'Monday' and sched[6].strftime('%H:%M:%S') == '07:30:00' and sched[7].strftime('%H:%M:%S') == '09:00:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{ sched[1] }}
+                            {{ sched[3] }}
+                            {{ sched[4] }}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Tuesday' and sched[6].strftime('%H:%M:%S') == '07:30:00' and sched[7].strftime('%H:%M:%S') == '09:00:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Wednesday' and sched[6].strftime('%H:%M:%S') == '07:30:00' and sched[7].strftime('%H:%M:%S') == '09:00:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Thursday' and sched[6].strftime('%H:%M:%S') == '07:30:00' and sched[7].strftime('%H:%M:%S') == '09:00:00' and sched[2] == current_professor %}
+                          <td>
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Friday' and sched[6].strftime('%H:%M:%S') == '07:30:00' and sched[7].strftime('%H:%M:%S') == '09:00:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Saturday' and sched[6].strftime('%H:%M:%S') == '07:30:00' and sched[7].strftime('%H:%M:%S') == '09:00:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+                      </tr>
+
+                      <tr>
+                        <th scope="row">9:00 AM - 10:30 AM</th>
+                        {% for sched in scheduleData if sched[5] == 'Monday' and sched[6].strftime('%H:%M:%S') == '09:00:00' and sched[7].strftime('%H:%M:%S') == '10:30:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Tuesday' and sched[6].strftime('%H:%M:%S') == '09:00:00' and sched[7].strftime('%H:%M:%S') == '10:30:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Wednesday' and sched[6].strftime('%H:%M:%S') == '09:00:00' and sched[7].strftime('%H:%M:%S') == '10:30:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Thursday' and sched[6].strftime('%H:%M:%S') == '09:00:00' and sched[7].strftime('%H:%M:%S') == '10:30:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Friday' and sched[6].strftime('%H:%M:%S') == '09:00:00' and sched[7].strftime('%H:%M:%S') == '10:30:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Saturday' and sched[6].strftime('%H:%M:%S') == '09:00:00' and sched[7].strftime('%H:%M:%S') == '10:30:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+                      </tr>
+
+                      <tr>
+                        <th scope="row">10:30 AM - 12:00 PM</th>
+                        {% for sched in scheduleData if sched[5] == 'Monday' and sched[6].strftime('%H:%M:%S') == '10:30:00' and sched[7].strftime('%H:%M:%S') == '12:00:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Tuesday' and sched[6].strftime('%H:%M:%S') == '10:30:00' and sched[7].strftime('%H:%M:%S') == '12:00:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Wednesday' and sched[6].strftime('%H:%M:%S') == '10:30:00' and sched[7].strftime('%H:%M:%S') == '12:00:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Thursday' and sched[6].strftime('%H:%M:%S') == '10:30:00' and sched[7].strftime('%H:%M:%S') == '12:00:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Friday' and sched[6].strftime('%H:%M:%S') == '10:30:00' and sched[7].strftime('%H:%M:%S') == '12:00:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Saturday' and sched[6].strftime('%H:%M:%S') == '10:30:00' and sched[7].strftime('%H:%M:%S') == '12:00:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+                      </tr>
+
+                      <tr>
+                        <th scope="row">12:00 PM - 1:30 PM</th>
+                        {% for sched in scheduleData if sched[5] == 'Monday' and sched[6].strftime('%H:%M:%S') == '12:00:00' and sched[7].strftime('%H:%M:%S') == '13:30:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Tuesday' and sched[6].strftime('%H:%M:%S') == '12:00:00' and sched[7].strftime('%H:%M:%S') == '13:30:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Wednesday' and sched[6].strftime('%H:%M:%S') == '12:00:00' and sched[7].strftime('%H:%M:%S') == '13:30:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Thursday' and sched[6].strftime('%H:%M:%S') == '12:00:00' and sched[7].strftime('%H:%M:%S') == '13:30:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Friday' and sched[6].strftime('%H:%M:%S') == '12:00:00' and sched[7].strftime('%H:%M:%S') == '13:30:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Saturday' and sched[6].strftime('%H:%M:%S') == '12:00:00' and sched[7].strftime('%H:%M:%S') == '13:30:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+                      </tr>
+
+                      <tr>
+                        <th scope="row">1:30 PM - 3:00 PM</th>
+                        {% for sched in scheduleData if sched[5] == 'Monday' and sched[6].strftime('%H:%M:%S') == '13:30:00' and sched[7].strftime('%H:%M:%S') == '15:00:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Tuesday' and sched[6].strftime('%H:%M:%S') == '13:30:00' and sched[7].strftime('%H:%M:%S') == '15:00:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Wednesday' and sched[6].strftime('%H:%M:%S') == '13:30:00' and sched[7].strftime('%H:%M:%S') == '15:00:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Thursday' and sched[6].strftime('%H:%M:%S') == '13:30:00' and sched[7].strftime('%H:%M:%S') == '15:00:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Friday' and sched[6].strftime('%H:%M:%S') == '13:30:00' and sched[7].strftime('%H:%M:%S') == '15:00:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Saturday' and sched[6].strftime('%H:%M:%S') == '13:30:00' and sched[7].strftime('%H:%M:%S') == '15:00:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+                      </tr>
+
+                      <tr>
+                        <th scope="row">3:00 PM - 4:30 PM</th>
+                        {% for sched in scheduleData if sched[5] == 'Monday' and sched[6].strftime('%H:%M:%S') == '15:00:00' and sched[7].strftime('%H:%M:%S') == '16:30:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Tuesday' and sched[6].strftime('%H:%M:%S') == '15:00:00' and sched[7].strftime('%H:%M:%S') == '16:30:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Wednesday' and sched[6].strftime('%H:%M:%S') == '15:00:00' and sched[7].strftime('%H:%M:%S') == '16:30:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Thursday' and sched[6].strftime('%H:%M:%S') == '15:00:00' and sched[7].strftime('%H:%M:%S') == '16:30:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Friday' and sched[6].strftime('%H:%M:%S') == '15:00:00' and sched[7].strftime('%H:%M:%S') == '16:30:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+
+                        {% for sched in scheduleData if sched[5] == 'Saturday' and sched[6].strftime('%H:%M:%S') == '15:00:00' and sched[7].strftime('%H:%M:%S') == '16:30:00' and sched[2] == current_professor %}
+                          <td> 
+                            {{sched[1]}}
+                            {{sched[3]}}
+                            {{sched[4]}}
+                          </td>
+                        {% else %}
+                          <td> - </td>
+                        {% endfor %}
+                      </tr>
+
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- END OF TABLE HTML CODE -->    
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row justify-content-center">
+          <div class="col-2 pt-4">
+            <button
+              type="button"
+              class="btn btn-success"
+              data-bs-toggle="modal"
+              data-bs-target="#addNewCourses"
+            >
+              Add New Course
+            </button>
+          </div>
+          <div class="col-2 pt-4">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-toggle="modal"
+              data-bs-target="#manageExistingCourses"
+            >
+              Manage Existing Course
+            </button>
+          </div>
+        </div>
+
+        <!-- ADDING NEW COURSES -->
+        <div
+          class="modal fade"
+          id="addNewCourses"
+          tabindex="-1"
+          aria-labelledby="exampleModalLabel"
+          aria-hidden="true"
+        >
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">
+                  Add New Course
+                </h1>
+              </div>
+              <div class="modal-body">
+                <div class="row">
+                  <div class="col-6 mb-3">
+                    <div class="form-floating">
+                      <input
+                        type="text"
+                        class="form-control"
+                        id="floatingInput"
+                        name="courseCode"
+                        placeholder="OACC1"
+                        style="height: 70px"
+                      />
+                      <label for="floatingInput">Course Code</label>
+                    </div>
+                  </div>
+                  <div class="col-6 mb-3">
+                    <div class="form-floating">
+                      <select
+                        class="form-select"
+                        name="courseUnits"
+                        style="height: 70px"
+                      >
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                      </select>
+                      <label for="floatingPassword">Units</label>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-floating mb-3">
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="floatingPassword"
+                    name="courseName"
+                    placeholder="Foundation of Shorthand"
+                    style="height: 70px"
+                  />
+                  <label for="floatingPassword">Course Name</label>
+                </div>
+                <div class="form-floating mb-3">
+                  <select
+                    class="form-select"
+                    name="courseYear"
+                    style="height: 70px"
+                  >
+                    <option value="FIRST YEAR">First Year</option>
+                    <option value="SECOND YEAR">Second Year</option>
+                    <option value="THIRD YEAR">Third Year</option>
+                    <option value="FOURTH YEAR">Fourth Year</option>
+                  </select>
+                  <label for="floatingPassword">Course Year</label>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  data-bs-dismiss="modal"
+                >
+                  Close
+                </button>
+                <button
+                  type="submit"
+                  name="btn"
+                  value="addCourse"
+                  class="btn btn-primary"
+                >
+                  Add Course
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SELECTING COURSES TO MANAGE -->
+        <div
+          class="modal fade"
+          id="manageExistingCourses"
+          tabindex="-1"
+          aria-labelledby="exampleModalLabel"
+          aria-hidden="true"
+        >
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">
+                  Select Course
+                </h1>
+              </div>
+              <div class="modal-body">
+                <div class="row">
+                  <div>
+                    <div class="form-floating">
+                      <select
+                        id="current_course"
+                        class="form-select"
+                        name="courseToBeDeleted"
+                        onchange="loadCourseInformation()"
+                      >
+                        <option selected>- Select a course -</option>
+                        {% for prof_courses in courseData %}
+                          <option value="{{prof_courses[0]}}">{{ prof_courses[0] }}</option>
+                        {% endfor %}
+                      </select>
+                      <label for="current_course">Course to be deleted</label>
+                    </div>
+                  </div>
+                </div>  
+              </div>
+              <div class="modal-footer">
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  data-bs-dismiss="modal"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  name="btn"
+                  class="btn btn-danger"
+                  data-bs-target="#deleteCourse" 
+                  data-bs-toggle="modal"
+                >
+                  Delete Course
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal fade" id="deleteCourse" aria-hidden="true" aria-labelledby="exampleModalToggleLabel2" tabindex="-1">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalToggleLabel2">Confirm Changes</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                Are you sure you want to delete this course? 
+              </div>
+              <div class="modal-footer">
+                <button
+                  type="submit"
+                  name="btn"
+                  class="btn btn-primary"
+                  data-bs-dismiss="modal"
+                  value="deleteCourse"
+                >
+                  Yes, delete it
+                </button>
+                <button class="btn btn-secondary" type="button" data-bs-toggle="modal" data-bs-target="#manageExistingCourses">No</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </form>
+    {% endblock %}
+  </body>
+</html>
