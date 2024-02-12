@@ -6,8 +6,6 @@ from flask_session import Session
 import pypyodbc as odbc
 
 app = Flask(__name__)
-
-# NOTE: Session Package is not yet implemented
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
@@ -34,7 +32,7 @@ def login():
         
         if result:
             if currentEmployeeId != 0000 and currentPassword != 'passadmin':
-                session["userId"] = currentEmployeeId # Record the Session Variable
+                session["userId"] = currentEmployeeId
                 return redirect('/')
             
             # IF: User is 'admin': proceed to Admin Portal
@@ -66,7 +64,7 @@ def register():
 # CODE BLOCK: Admin Page
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
-    if 'userId' not in session:
+    if 'userId' not in session or session['userId'] != '0000':
         return redirect(url_for("login")) # IF: Not logged in, redirect to login page
     
     else:
