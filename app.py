@@ -33,7 +33,7 @@ def login():
         if result:
             if currentEmployeeId != 0000 and currentPassword != 'passadmin':
                 session["userId"] = currentEmployeeId
-                return redirect('/')
+                return redirect(url_for('index'))
             
             # IF: User is 'admin': proceed to Admin Portal
             session['userId'] = '0000'
@@ -61,6 +61,38 @@ def register():
  
     return render_template('register.html')
 
+@app.route('/index', methods=['GET', 'POST'])
+def index():
+
+
+    if 'userId' not in session:
+        return redirect(url_for("login")) # IF: Not logged in, redirect to login page
+    
+    else:
+        getProfessorsQuery = "SELECT employeeId, employeeName FROM Professors WHERE employeeId != 0000"
+        professorData = executeQuery(getProfessorsQuery)
+
+        getCoursesQuery = "SELECT * FROM Courses"
+        courseData = executeQuery(getCoursesQuery)
+
+        getCourseSchedulesQuery = "SELECT * FROM CourseSchedules"
+        scheduleData = executeQuery(getCourseSchedulesQuery)
+
+        currentId = int(session['userId'])
+
+        if request.method == 'POST':
+            action = request.form['btn']
+
+            if action == 'logout':
+                session.pop('userId', 0)
+                return redirect("/login")
+
+        return render_template("index.html",
+        current_professor=currentId,
+        professorData=professorData,
+        courseData=courseData,
+        scheduleData=scheduleData)
+
 # CODE BLOCK: Admin Page
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
@@ -76,7 +108,6 @@ def admin():
 
         getCourseSchedulesQuery = "SELECT * FROM CourseSchedules"
         scheduleData = executeQuery(getCourseSchedulesQuery)
-        print(scheduleData)
 
         current_professor = 0 # INIT: No value needed
         
