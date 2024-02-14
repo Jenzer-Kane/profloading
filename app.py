@@ -63,8 +63,6 @@ def register():
 
 @app.route('/index', methods=['GET', 'POST'])
 def index():
-
-
     if 'userId' not in session:
         return redirect(url_for("login")) # IF: Not logged in, redirect to login page
     
@@ -128,7 +126,8 @@ def admin():
                 checkResult = executeQuery(checkQuery)
 
                 if checkResult:
-                    return redirect(url_for('admin')) # WIP: Add a notification that the courseId specified already exists
+                    print("TEST (Admin Page): The course already exists!") # TEST: Test Validation
+                    return redirect(url_for('admin'))
                 else:
                     executeQuery(insertQuery)
                     print("TEST (Admin Page): You have inserted into the database!") # TEST: Test Validation
