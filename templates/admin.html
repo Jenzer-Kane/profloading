@@ -70,9 +70,11 @@
         var dropdown = document.getElementById("profDetails");
         var selectedValue = dropdown.value;
         var hiddenDiv = document.getElementById("hiddenDiv");
+        var hiddenCheckScheduleButton = document.getElementById("hiddenCheckSchedule");
 
         if (selectedValue != professorHolderVariable) {
           hiddenDiv.style.display = "none";
+          hiddenCheckScheduleButton.style.display = "block";
         }
       }
 
@@ -96,9 +98,9 @@
             </h5>
             <p class="text-center">See content below for details.</p>
             {% else %}
-            <p class="text-center mt-3">
+            <h5 class="text-center my-3">
               Please select a professor to be scheduled.
-            </p>
+            </h5>
             {% endfor %}
           </div>
         </div>
@@ -132,6 +134,7 @@
                       value="checkProfessorSchedule"
                       class="btn btn-secondary"
                       onloadstart="hideCheckSchedule()"
+                      formnovalidate
                     >
                       Check Schedule
                     </button>
