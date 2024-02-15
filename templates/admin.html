@@ -16,6 +16,10 @@
         display: block;
       }
 
+      .choiceLabel {
+        display: block;
+      }
+
       #contentContainer {
         align-content: center;
         justify-content: center;
@@ -28,6 +32,7 @@
     </style>
 
     <script>
+      var scheduleMode = 0
       function updateHiddenEndTime() {
         var endTime = $("#end-time").val();
         $("#hidden-endingTime").val(endTime);
@@ -65,16 +70,56 @@
         return endTimeOptions;
       }
 
+      function updateHonorVacantHiddenEndTime() {
+        var endTime = $("#honor-vacant-end-time").val();
+        $("#honor-vacant-hidden-endingTime").val(endTime);
+      }
+
+      function updateHonorVacantEndTime() {
+        var startTime = $("#honor-vacant-start-time").val();
+        $("#honor-vacant-end-time").empty();
+        var endTimeOptions = generateHonorVacantEndTimeOptions(startTime);
+        $("#honor-vacant-end-time").append(endTimeOptions);
+        updateHonorVacantHiddenEndTime();
+      }
+
+      function generateHonorVacantEndTimeOptions(startTime) {
+        var startTimeObj = new Date("2000-01-01 " + startTime);
+        startTimeObj.setHours(
+          startTimeObj.getHours() + 1,
+          startTimeObj.getMinutes() + 30
+        );
+        var endTimeOptions = "";
+
+        for (var i = 1; i <= 12; i++) {
+          var endTimeValue = startTimeObj.toTimeString().slice(0, 8);
+          var endTimeText = startTimeObj.toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+          endTimeOptions += `<option value="${endTimeValue}">${endTimeText} </option>`;
+          startTimeObj.setHours(
+            startTimeObj.getHours() + 1,
+            startTimeObj.getMinutes() + 30
+          );
+        }
+
+        return endTimeOptions;
+      }
+
       function hideDiv() {
         var professorHolderVariable = "{{ current_professor }}";
         var dropdown = document.getElementById("profDetails");
         var selectedValue = dropdown.value;
         var hiddenDiv = document.getElementById("hiddenDiv");
         var hiddenCheckScheduleButton = document.getElementById("hiddenCheckSchedule");
+        var hiddenHonorariumVacancyButton = document.getElementById("hiddenHonorariumVacancy");
 
         if (selectedValue != professorHolderVariable) {
           hiddenDiv.style.display = "none";
           hiddenCheckScheduleButton.style.display = "block";
+          hiddenHonorariumVacancyButton.style.display = "block";
+          document.getElementById("choiceLabel").style.display = "block";
         }
       }
 
@@ -82,11 +127,16 @@
         var professorHolderVariable = "{{ current_professor }}";
         if (professorHolderVariable != 0) {
           document.getElementById("hiddenCheckSchedule").style.display = "none";
+          document.getElementById("hiddenHonorariumVacancy").style.display = "none";
+          document.getElementById("choiceLabel").style.display = "none";
         }
       };
+
+      console.log(scheduleMode)
     </script>
   </head>
   <body class="bg-tertiary-subtle">
+    {{ scheduleMode }}
     <form method="POST">
       <div class="container-fluid" id="mainContainer">
         <div class="row pt-4">
@@ -126,23 +176,42 @@
                   </select>
                   <label for="profDetails">Professor Name</label>
                 </div>
-                <div class="pt-4 text-center">
-                  <div class="hiddenDivScheduleButton" id="hiddenCheckSchedule">
-                    <button
-                      type="submit"
-                      name="btn"
-                      value="checkProfessorSchedule"
-                      class="btn btn-secondary"
-                      onloadstart="hideCheckSchedule()"
-                      formnovalidate
-                    >
-                      Check Schedule
-                    </button>
-                  </div>
+
+                <p 
+                  id="choiceLabel"
+                  class="pt-5 text-center"
+                  onloadstart="hideCheckSchedule()"
+                >
+                  Choose from the options:
+                </p>
+                <div class="d-flex column-gap-3 justify-content-center">
+                  <button
+                    id="hiddenCheckSchedule"
+                    type="submit"
+                    name="btn"
+                    value="checkProfessorSchedule"
+                    class="btn btn-primary"
+                    onloadstart="hideCheckSchedule()"
+                    formnovalidate
+                  >
+                    Schedule Courses
+                  </button>
+                
+                  <button
+                    id="hiddenHonorariumVacancy"
+                    type="submit"
+                    name="btn"
+                    value="setHonorariumVacantTime"
+                    class="btn btn-secondary"
+                    onloadstart="hideHonorariumVacancy()"
+                    formnovalidate
+                  >
+                    Honorarium/Vacancy
+                  </button>
                 </div>
 
                 <div class="pt-3 hidden" id="hiddenDiv">
-                  {% if current_professor != 0 %}
+                  {% if current_professor != 0 and scheduleMode == 1 %}
                   <div class="row">
                     <div class="col-6">
                       <div class="form-floating mb-3">
@@ -167,7 +236,7 @@
                           required
                         >
                           <option default></option>
-                          {% for prof_courses in courseData %}
+                          {% for prof_courses in courseData if prof_courses[0] != 'HT' ~ current_professor and prof_courses[0] != 'VT' ~ current_professor %}
                           <option value="{{prof_courses[0]}}">
                             {{ prof_courses[0] }}
                           </option>
@@ -255,19 +324,133 @@
                     </div>
                   </div>
 
-                  <div class="text-center">
+                  <div class="d-flex column-gap-3 justify-content-center">
+                    <button
+                      type="submit"
+                      name="btn"
+                      value="backToAdmin"
+                      class="btn btn-secondary"
+                      formnovalidate
+                    >
+                      Back
+                    </button>
+                  
                     <button
                       type="submit"
                       name="btn"
                       value="manageCourse"
-                      class="btn btn-primary"
+                      class="btn btn-success"
                     >
                       Confirm Changes
                     </button>
                   </div>
 
+                  {% elif current_professor != 0 and scheduleMode == 2 %}
+                    <div class="row">
+                      <div class="col-6">
+                        <div class="form-floating">
+                          <select
+                            id="honorVacantDropdown"
+                            class="form-select"
+                            name="honorVacantChoice"
+                            onchange="hideDiv()"
+                          >
+                            <option default></option>
+                            <option value="Honorarium Time">Honorarium Time</option>
+                            <option value="Vacant Time">Vacant Time</option>
+                          </select>
+                          <label for="honorVacantDropdown">Select Schedule</label>
+                        </div>
+                      </div>
+
+                      <div class="col-6">
+                        <div class="form-floating">
+                          <select class="form-select" required name="honorVacantDayOfWeek">
+                            <option default></option>
+                            <option value="Monday">Monday</option>
+                            <option value="Tuesday">Tuesday</option>
+                            <option value="Wednesday">Wednesday</option>
+                            <option value="Thursday">Thursday</option>
+                            <option value="Friday">Friday</option>
+                            <option value="Saturday">Saturday</option>
+                          </select>
+                          <label for="floatingPassword">Day of Week</label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="row pt-4">
+                      <div class="col-6 mb-3">
+                        <div class="form-floating">
+                          <select
+                            class="form-select"
+                            required
+                            id="honor-vacant-start-time"
+                            name="honorVacantStartTime"
+                            onchange="updateHonorVacantEndTime()"
+                          >
+                            <option default></option>
+                            <option value="07:30:00">7:30 AM</option>
+                            <option value="09:00:00">9:00 AM</option>
+                            <option value="10:30:00">10:30 AM</option>
+                            <option value="12:00:00">12:00 PM</option>
+                            <option value="13:30:00">01:30 PM</option>
+                            <option value="15:00:00">03:00 PM</option>
+                          </select>
+                          <label for="floatingPassword">Start Time</label>
+                        </div>
+                      </div>
+
+                      <div class="col-6 mb-3">
+                        <div class="form-floating">
+                          <select
+                            class="form-select"
+                            id="honor-vacant-end-time"
+                            onchange="updateHonorVacantHiddenEndTime()"
+                            disabled
+                          >
+                            <option default disabled></option>
+                            <!-- Options will be dynamically populated based on the selected Start Time -->
+                          </select>
+                          <label for="floatingPassword">End Time</label>
+                        </div>
+                      </div>
+
+                      <!-- Hidden input to store the value of the End Time dropdown -->
+                      <input
+                        type="hidden"
+                        id="honor-vacant-hidden-endingTime"
+                        name="honorVacantEndingTime"
+                      />
+                    </div>
+
+                    
+                    <div class="d-flex column-gap-3 justify-content-center">
+                      <button
+                        type="submit"
+                        name="btn"
+                        value="backToAdmin"
+                        class="btn btn-secondary"
+                        formnovalidate
+                      >
+                        Back
+                      </button>
+                    
+                      <button
+                        type="submit"
+                        name="btn"
+                        value="insertHonorariumVacant"
+                        class="btn btn-success"
+                      >
+                        Confirm Changes
+                      </button>
+                    </div>
+
+
                   {% endif %}
                 </div>
+
+
               </div>
             </div>
 
@@ -599,7 +782,7 @@
 
                     <div
                       id="additionalOptions"
-                      class="collapse row bg-primary bg-opacity-10 justify-content-center"
+                      class="collapse show row bg-primary bg-opacity-10 justify-content-center"
                       data-bs-parent="#optionsBox"
                     >
                       <div class="col-2 py-4">

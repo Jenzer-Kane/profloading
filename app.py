@@ -50,12 +50,16 @@ def register():
 
         checkQuery = f"SELECT * FROM Professors WHERE employeeId = {new_EmployeeId}"
         insertQuery = f"INSERT INTO Professors (employeeId, employeeName, employeePassword) VALUES ({new_EmployeeId}, '{new_EmployeeName}', '{new_EmployeePassword}')"
+        insertHonorariumToken = f"INSERT INTO Courses (courseId, courseName, courseYear, courseUnits, professorId) VALUES ('{'HT' + new_EmployeeId}', 'Honorarium Time', '', 0, {new_EmployeeId})"
+        insertVacantToken = f"INSERT INTO Courses (courseId, courseName, courseYear, courseUnits, professorId) VALUES ('{'VT' + new_EmployeeId}', 'Vacant Time', '', 0, {new_EmployeeId})"
         checkResult = executeQuery(checkQuery)
 
         if checkResult: # IF: an existing professorId is detected -> return redirect('/register')
             return redirect(url_for('register'))
         else:
             executeQuery(insertQuery)
+            executeQuery(insertHonorariumToken)
+            executeQuery(insertVacantToken)
             print("TEST (Register Page): You have inserted into the database!")
             return redirect(url_for('login'))
  
@@ -108,9 +112,13 @@ def admin():
         scheduleData = executeQuery(getCourseSchedulesQuery)
 
         current_professor = 0 # INIT: No value needed
+        scheduleMode = 0
         
         if request.method == "POST":
             action = request.form['btn']
+
+            if action == 'backToAdmin':
+                return redirect("/admin")
 
             if action == 'logout':
                 session.pop('userId', 0)
@@ -134,13 +142,24 @@ def admin():
                     return redirect(url_for('admin'))
 
             if action == 'checkProfessorSchedule':
+                scheduleMode = 1
                 current_professor = request.form['professorDetails']
-                print(current_professor)
                 return render_template('admin.html',
                     professorData=professorData,
                     courseData=courseData,
                     scheduleData=scheduleData,
-                    current_professor=int(current_professor))
+                    current_professor=int(current_professor),
+                    scheduleMode=scheduleMode)
+
+            if action == 'setHonorariumVacantTime':
+                scheduleMode = 2
+                current_professor = request.form['professorDetails']
+                return render_template('admin.html',
+                    professorData=professorData,
+                    courseData=courseData,
+                    scheduleData=scheduleData,
+                    current_professor=int(current_professor),
+                    scheduleMode=scheduleMode)
 
             if action == 'manageCourse':
                 current_course = request.form['currentCourse'].upper()
@@ -166,7 +185,7 @@ def admin():
 
                 insertScheduleQuery = f"INSERT INTO CourseSchedules (courseId, professorId, room, section, dayOfWeek, startTime, endTime) VALUES ('{current_course}', {current_professor}, '{newRoom}', '{newCourseSection}', '{newDayOfWeek}', '{newStartTime}', '{newEndTime}')"
                 updateCourseQuery = f"UPDATE Courses SET professorId = {current_professor} WHERE courseId = '{current_course}'"
-                checkIfSameTime = f"SELECT * FROM CourseSchedules WHERE startTime = '{newStartTime}' AND endTime = '{newEndTime}'"
+                checkIfSameTime = f"SELECT * FROM CourseSchedules WHERE startTime = '{newStartTime}' AND endTime = '{newEndTime}' and dayOfWeek = '{newDayOfWeek}'"
 
                 checkExceeds3Hours = f"""
                                         SELECT professorId, 
@@ -183,7 +202,7 @@ def admin():
                     
                     if (ifProfessorExists == True): # IF: Current professor being assigned is assigned to the current_course -> proceed with logic
                         if (executeQuery(checkIfSameTime)):
-                            print("\n\nTEST (Admin Page): This subject is already assigned in the same time!\n\n") # TEST: Test Validation
+                            print("\n\nTEST (Admin Page): There is a subject already assigned in the same time!\n\n") # TEST: Test Validation
                             return redirect(url_for('admin'))
 
                         else:
@@ -233,6 +252,63 @@ def admin():
                         scheduleData=scheduleData,
                         current_professor=0)
 
+            if action == 'insertHonorariumVacant':
+                current_professor = request.form['professorDetails']
+                otherScheduleType = request.form['honorVacantChoice']
+                honorVacantDayOfWeek = request.form['honorVacantDayOfWeek']
+                honorVacantStartTime = request.form['honorVacantStartTime']
+                honorVacantEndTime = request.form['honorVacantEndingTime']
+                
+                getHonorariumID = f"SELECT courseId FROM Courses where courseId = '{'HT' + current_professor}'"
+                getVacantID = f"SELECT courseId FROM Courses where courseId = '{'VT' + current_professor}'"
+                honorIDquery = executeQuery(getHonorariumID)
+                vacantIDquery = executeQuery(getVacantID)
+
+                if otherScheduleType == 'Honorarium Time':
+                    choiceID = honorIDquery[0][0]
+                
+                if otherScheduleType == 'Vacant Time':
+                    choiceID = vacantIDquery[0][0]
+
+                insertHonorVacantQuery = f"INSERT INTO CourseSchedules (courseId, professorId, room, section, dayOfWeek, startTime, endTime) VALUES ('{choiceID}', {current_professor}, '', '', '{honorVacantDayOfWeek}', '{honorVacantStartTime}', '{honorVacantEndTime}')"
+                checkSameHonorVacantTime = f"SELECT * FROM CourseSchedules WHERE startTime = '{honorVacantStartTime}' AND endTime = '{honorVacantEndTime}' AND dayOfWeek = '{honorVacantDayOfWeek}'"
+                checkExceedsHourMins = f"""
+                                        SELECT professorId, 
+                                            SUM(DATEDIFF(MINUTE, startTime, endTime) / 60.0) AS totalScheduledHours
+                                        FROM CourseSchedules
+                                        WHERE professorId = {int(current_professor)}
+                                        AND courseId = '{choiceID}'
+                                        AND dayOfWeek = '{honorVacantDayOfWeek}'
+                                        GROUP BY professorId
+                                        HAVING SUM(DATEDIFF(MINUTE, startTime, endTime) / 60.0) >= 1.5;
+                                        """
+
+                if scheduleData:
+                    if (executeQuery(checkSameHonorVacantTime)):
+                        print(f"\n\nTEST (Admin Page): {otherScheduleType} is already assigned in the same time!\n\n") # TEST: Test Validation
+                        return redirect(url_for('admin'))
+                    else:
+                        if (executeQuery(checkExceedsHourMins)):
+                            print("\n\nTEST (Admin Page): Already has 1.5 hours in slot!\n\n") # TEST: Test Validation
+                            return redirect(url_for('admin'))
+                        else:
+                            print("\n\nTEST (Admin Page): Inserted into the database!\n\n") # TEST: Test Validation
+                            executeQuery(insertHonorVacantQuery)
+                            return render_template('admin.html',
+                                professorData=professorData,
+                                courseData=courseData,
+                                scheduleData=scheduleData,
+                                current_professor=0)
+                
+                else:
+                    executeQuery(insertHonorVacantQuery)
+                    print("\n\nTEST (Admin Page): Inserted into the database!\n\n") # TEST: Test Validation
+                    return render_template('admin.html',
+                                professorData=professorData,
+                                courseData=courseData,
+                                scheduleData=scheduleData,
+                                current_professor=0)
+
             # WIP: Delete Course Feature
             if action == "deleteCourse":
                 selectedCourseId = request.form["courseToBeDeleted"]
@@ -244,11 +320,14 @@ def admin():
                 executeQuery(deleteFromCourses)
                 return redirect(url_for('admin'))
 
+        print(request.form)
+
         return render_template('admin.html',
             professorData=professorData,
             courseData=courseData,
             scheduleData=scheduleData,
-            current_professor=int(current_professor))
+            current_professor=int(current_professor),
+            scheduleMode=scheduleMode)
 
 # CODE BLOCK: Executing the queries
 def executeQuery(checkQuery, params=None):
