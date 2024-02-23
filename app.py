@@ -4,6 +4,7 @@
 from flask import Flask, render_template, redirect, request, session, url_for
 from flask_session import Session
 import pypyodbc as odbc
+from web_functions import *
 
 app = Flask(__name__)
 app.config["SESSION_PERMANENT"] = False
@@ -14,28 +15,20 @@ server = 'umakclassscheduler.database.windows.net'
 database = 'SchedulerDB'
 connString = 'Driver={ODBC Driver 18 for SQL Server};Server=tcp:umakscheduler.database.windows.net,1433;Database='+database+';Uid=umakscheduler;Pwd=Adminschedule123;Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;'
 
-@app.route('/')
-def home():
-    if 'userId' not in session:
-        return redirect(url_for('login')) # IF: Not logged in, redirect to login page
-
-    query = "SELECT * FROM Professors"
-    return executeQuery(query)
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         currentEmployeeId = request.form['employeeId']
         currentPassword = request.form['password']
-        query = f"SELECT * FROM Professors WHERE employeeId = {currentEmployeeId} AND employeePassword = '{currentPassword}'"
-        result = executeQuery(query)
+        currentProfessorUser = ExistingProfessor(currentEmployeeId, currentPassword)
+        result = currentProfessorUser.login_user()
+
+        print(result)
         
-        if result:
-            if currentEmployeeId != 0000 and currentPassword != 'passadmin':
-                session["userId"] = currentEmployeeId
-                return redirect(url_for('index'))
-            
-            # IF: User is 'admin': proceed to Admin Portal
+        if result == True:
+            session["userId"] = currentEmployeeId
+            return redirect(url_for('index'))
+        elif result == False:
             session['userId'] = '0000'
             return redirect(url_for('admin'))
 
@@ -45,42 +38,33 @@ def login():
 def register():
     if request.method == 'POST':
         new_EmployeeId = request.form['employeeId']
-        new_EmployeeName = request.form['employeeName']
+        new_EmployeeFirst = request.form['employeeFirstName']
+        new_EmployeeMI = request.form['employeeMI']
+        new_EmployeeSurname = request.form['employeeSurname']
         new_EmployeePassword = request.form['password']
+        newProfessor = NewProfessor(new_EmployeeFirst, new_EmployeeMI, new_EmployeeSurname, new_EmployeeId, new_EmployeePassword)
+        result = newProfessor.register_user()
 
-        checkQuery = f"SELECT * FROM Professors WHERE employeeId = {new_EmployeeId}"
-        insertQuery = f"INSERT INTO Professors (employeeId, employeeName, employeePassword) VALUES ({new_EmployeeId}, '{new_EmployeeName}', '{new_EmployeePassword}')"
-        insertHonorariumToken = f"INSERT INTO Courses (courseId, courseName, courseYear, courseUnits, professorId) VALUES ('{'HT' + new_EmployeeId}', 'Honorarium Time', '', 0, {new_EmployeeId})"
-        insertVacantToken = f"INSERT INTO Courses (courseId, courseName, courseYear, courseUnits, professorId) VALUES ('{'VT' + new_EmployeeId}', 'Vacant Time', '', 0, {new_EmployeeId})"
-        checkResult = executeQuery(checkQuery)
-
-        if checkResult: # IF: an existing professorId is detected -> return redirect('/register')
+        if result:
             return redirect(url_for('register'))
         else:
-            executeQuery(insertQuery)
-            executeQuery(insertHonorariumToken)
-            executeQuery(insertVacantToken)
-            print("TEST (Register Page): You have inserted into the database!")
             return redirect(url_for('login'))
  
     return render_template('register.html')
 
+# CODE BLOCK: User Page
 @app.route('/index', methods=['GET', 'POST'])
 def index():
     if 'userId' not in session:
-        return redirect(url_for("login")) # IF: Not logged in, redirect to login page
+        return redirect(url_for('login')) # IF: Not logged in, redirect to login page
     
     else:
-        getProfessorsQuery = "SELECT employeeId, employeeName FROM Professors WHERE employeeId != 0000"
-        professorData = executeQuery(getProfessorsQuery)
-
-        getCoursesQuery = "SELECT * FROM Courses"
-        courseData = executeQuery(getCoursesQuery)
-
-        getCourseSchedulesQuery = "SELECT * FROM CourseSchedules"
-        scheduleData = executeQuery(getCourseSchedulesQuery)
-
         currentId = int(session['userId'])
+        data = SchedulerData(currentId)
+
+        professorData = data.get_professor_data()
+        courseData = data.get_course_data()
+        scheduleData = data.get_schedule_data()
 
         if request.method == 'POST':
             action = request.form['btn']
@@ -102,14 +86,12 @@ def admin():
         return redirect(url_for("login")) # IF: Not logged in, redirect to login page
     
     else:
-        getProfessorsQuery = "SELECT employeeId, employeeName FROM Professors WHERE employeeId != 0000"
-        professorData = executeQuery(getProfessorsQuery)
+        currentId = int(session['userId'])
+        data = SchedulerData(currentId)
 
-        getCoursesQuery = "SELECT * FROM Courses"
-        courseData = executeQuery(getCoursesQuery)
-
-        getCourseSchedulesQuery = "SELECT * FROM CourseSchedules"
-        scheduleData = executeQuery(getCourseSchedulesQuery)
+        professorData = data.get_professor_data()
+        courseData = data.get_course_data()
+        scheduleData = data.get_schedule_data()
 
         current_professor = 0 # INIT: No value needed
         scheduleMode = 0
@@ -129,16 +111,12 @@ def admin():
                 newCourseName = request.form['courseName'].upper()
                 newCourseYear = request.form['courseYear']
                 newCourseUnits = request.form['courseUnits']
-                checkQuery = f"SELECT * FROM Courses WHERE courseId = '{newCourseCode}'"
-                insertQuery = f"INSERT INTO Courses (courseId, courseName, courseYear, courseUnits) VALUES ('{newCourseCode}', '{newCourseName}', '{newCourseYear}', {newCourseUnits})"
-                checkResult = executeQuery(checkQuery)
+                course = CourseManagement(newCourseCode, newCourseName, newCourseYear, newCourseUnits)
+                result = course.add_course()
 
-                if checkResult:
-                    print("TEST (Admin Page): The course already exists!") # TEST: Test Validation
+                if result:
                     return redirect(url_for('admin'))
                 else:
-                    executeQuery(insertQuery)
-                    print("TEST (Admin Page): You have inserted into the database!") # TEST: Test Validation
                     return redirect(url_for('admin'))
 
             if action == 'checkProfessorSchedule':
@@ -169,9 +147,15 @@ def admin():
                 newEndTime = request.form['endingTime']
                 newDayOfWeek = request.form['dayOfWeek']
                 newRoom = request.form['courseRoom'].upper()
+                schedule = ScheduleManagement(newCourseSection, newStartTime, newEndTime, newDayOfWeek, newRoom, scheduleData)
 
-                ifProfessorExists = False
-                ifNoProfessorExists = False
+                schedule.currentEmployeeID = request.form['currentCourse'].upper()
+                schedule.currentCourseID = request.form['professorDetails']
+
+                print(scheduleData)
+
+                ifProfessorExists = schedule.check_professor_from_courses()
+                ifNoProfessorExists = schedule.check_noprofessor_from_courses()
 
                 for courses in courseData:
                     if courses[0] == current_course and courses[4] == int(current_professor):
@@ -200,44 +184,25 @@ def admin():
                 
                 if (scheduleData): # IF: Records exist in CourseSchedules Table -> proceed with logic
                     
-                    if (ifProfessorExists == True): # IF: Current professor being assigned is assigned to the current_course -> proceed with logic
-                        if (executeQuery(checkIfSameTime)):
-                            print("\n\nTEST (Admin Page): There is a subject already assigned in the same time!\n\n") # TEST: Test Validation
+                    if (schedule.check_professor_from_courses()): # IF: Current professor being assigned is assigned to the current_course -> proceed with logic
+                        if (schedule.add_course_to_schedule() == False):
                             return redirect(url_for('admin'))
-
                         else:
-                            if (executeQuery(checkExceeds3Hours)):
-                                print("\n\nTEST (Admin Page): Already has 3 hours in slot!\n\n") # TEST: Test Validation
+                            return render_template('admin.html',
+                                    professorData=professorData,
+                                    courseData=courseData,
+                                    scheduleData=scheduleData,
+                                    current_professor=0)
+                    else:
+                        if (schedule.check_noprofessor_from_courses):
+                            if (schedule.add_course_to_schedule() == False):
                                 return redirect(url_for('admin'))
                             else:
-                                print("\n\nTEST (Admin Page): Inserted into the database!\n\n") # TEST: Test Validation
-                                executeQuery(insertScheduleQuery)
                                 return render_template('admin.html',
                                     professorData=professorData,
                                     courseData=courseData,
                                     scheduleData=scheduleData,
                                     current_professor=0)
-
-                    else:
-                        if (ifNoProfessorExists):
-                            # NOTE: This if-block needs to be converted into a function for easier debugging
-                            if (executeQuery(checkIfSameTime)):
-                                print("\n\nTEST (Admin Page): This subject is already assigned in the same time!\n\n") # TEST: Test Validation
-                                return redirect(url_for('admin'))
-
-                            else:
-                                if (executeQuery(checkExceeds3Hours)):
-                                    print("\n\nTEST (Admin Page): Already has 3 hours in slot!\n\n") # TEST: Test Validation
-                                    return redirect(url_for('admin'))
-                                else:
-                                    print("\n\nTEST (Admin Page): Inserted into the database!\n\n") # TEST: Test Validation
-                                    executeQuery(insertScheduleQuery)
-                                    executeQuery(updateCourseQuery)
-                                    return render_template('admin.html',
-                                        professorData=professorData,
-                                        courseData=courseData,
-                                        scheduleData=scheduleData,
-                                        current_professor=0)
                         
                         else:
                             print("\n\nTEST (Admin Page): There is already a professor assigned in this course!\n\n") # TEST: Test Validation

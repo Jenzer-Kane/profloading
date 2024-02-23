@@ -1,0 +1,14 @@
+checkQuery = f"SELECT * FROM Professors WHERE employeeId = {new_EmployeeId}"
+        insertQuery = f"INSERT INTO Professors (employeeId, employeeName, employeePassword) VALUES ({new_EmployeeId}, '{new_EmployeeName}', '{new_EmployeePassword}')"
+        insertHonorariumToken = f"INSERT INTO Courses (courseId, courseName, courseYear, courseUnits, professorId) VALUES ('{'HT' + new_EmployeeId}', 'Honorarium Time', '', 0, {new_EmployeeId})"
+        insertVacantToken = f"INSERT INTO Courses (courseId, courseName, courseYear, courseUnits, professorId) VALUES ('{'VT' + new_EmployeeId}', 'Vacant Time', '', 0, {new_EmployeeId})"
+        checkResult = executeQuery(checkQuery)
+
+        if checkResult: # IF: an existing professorId is detected -> return redirect('/register')
+            return redirect(url_for('register'))
+        else:
+            executeQuery(insertQuery)
+            executeQuery(insertHonorariumToken)
+            executeQuery(insertVacantToken)
+            print("TEST (Register Page): You have inserted into the database!")
+            return redirect(url_for('login'))
