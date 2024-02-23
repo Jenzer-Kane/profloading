@@ -18,29 +18,41 @@
         margin: auto;
         width: 60%;
       }
+
+      #mainContainer {
+        height: 80vh;
+      }
+
+      #scheduleContainer {
+        position: relative;
+      }
+
+      #scheduleTable th {
+        vertical-align: middle;
+      }
+      
+      #scheduleTable td {
+        vertical-align: middle;
+      }
     </style>
   </head>
 
   <body>
-    <div id="alertContainer" class="container">
-      <div class="container-xl">
-        <div class="alert alert-info my-5 pt-4" id="notificationAlert">
-          {% for prof in professorData if prof[0] == current_professor %}
-          <h4>Schedule for <b>{{ prof[1] }}</b> is available.</h4>
-          <p>See table below for details.</p>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
+    <div class="container" id="mainContainer">
+      <div class="bg-primary-subtle p-4 rounded-4 m-5" id="scheduleContainer">
+        {% for prof in professorData if prof[0] == current_professor and prof[2] == 'Complete' %}
 
-    <div class="container">
-      <div class="bg-primary-subtle p-4 rounded-4">
-        {% for prof in professorData if prof[0] == current_professor %}
+        <div class="container-xl">
+          <div class="alert alert-info my-3 pt-4" id="notificationAlert">
+            <h4>Schedule for <b>{{ prof[1] }}</b> is available.</h4>
+            <p>See table below for details.</p>
+          </div>
+        </div>
 
         <div class="container">
           <!-- TABLE HTML CODE (IT'S NOT EFFICIENT, BUT IT WORKS, PLEASE EDIT WITH CAUTION!)-->
 
-          <table class="table table-striped table-sm text-center mt-4">
+          <table class="table table-striped table-sm text-center mt-4" id="scheduleTable">
             <thead>
               <tr>
                 <th scope="col">Time</th>
@@ -71,7 +83,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -83,7 +95,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -95,7 +107,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -107,7 +119,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -119,7 +131,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %}
@@ -136,7 +148,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -148,7 +160,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -160,7 +172,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -172,7 +184,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -184,7 +196,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -196,7 +208,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %}
@@ -213,7 +225,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -225,7 +237,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -237,7 +249,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -249,7 +261,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -261,7 +273,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -273,7 +285,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %}
@@ -290,7 +302,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -302,7 +314,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -314,7 +326,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -326,7 +338,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -338,7 +350,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -350,7 +362,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %}
@@ -367,7 +379,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -379,7 +391,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -391,7 +403,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -403,7 +415,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -415,7 +427,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -427,7 +439,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %}
@@ -444,7 +456,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -456,7 +468,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -468,7 +480,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -480,7 +492,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -492,7 +504,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -504,7 +516,7 @@
                 {% elif sched[1] == 'VT' ~ current_professor %}
                 <td>Vacant Time</td>
                 {% else %}
-                <td>{{sched[1]}} {{sched[3]}} {{sched[4]}}</td>
+                <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                 {% endif %} {% else %}
                 <td>-</td>
                 {% endfor %}
@@ -512,11 +524,13 @@
             </tbody>
           </table>
           {% else %}
-          <div class="alert alert-info border-3 text-center">
-            No schedule to be displayed.
+          <div class="alert alert-info border-3 mt-3 text-center" id="alertNoSchedule">
+            <b>Sorry! Your current schedule is not yet complete. </b><br/>
+            Please wait for your schedule to be posted. <br/>
           </div>
         </div>
         {% endfor %}
+        <p class="text-center"><small>If there are problems with your schedule, please <a href="https://www.umak.edu.ph/help/directory/#toggle-id-5">contact the site administrator.</a></small></p>
       </div>
     </div>
   </body>

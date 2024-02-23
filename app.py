@@ -31,7 +31,7 @@ def login():
         result = executeQuery(query)
         
         if result:
-            if currentEmployeeId != 0000 and currentPassword != 'passadmin':
+            if currentEmployeeId != 0000 and currentPassword != 'admin':
                 session["userId"] = currentEmployeeId
                 return redirect(url_for('index'))
             
@@ -49,7 +49,7 @@ def register():
         new_EmployeePassword = request.form['password']
 
         checkQuery = f"SELECT * FROM Professors WHERE employeeId = {new_EmployeeId}"
-        insertQuery = f"INSERT INTO Professors (employeeId, employeeName, employeePassword) VALUES ({new_EmployeeId}, '{new_EmployeeName}', '{new_EmployeePassword}')"
+        insertQuery = f"INSERT INTO Professors (employeeId, employeeName, employeePassword, employeeSchedule) VALUES ({new_EmployeeId}, '{new_EmployeeName}', '{new_EmployeePassword}', 'Incomplete')"
         insertHonorariumToken = f"INSERT INTO Courses (courseId, courseName, courseYear, courseUnits, professorId) VALUES ('{'HT' + new_EmployeeId}', 'Honorarium Time', '', 0, {new_EmployeeId})"
         insertVacantToken = f"INSERT INTO Courses (courseId, courseName, courseYear, courseUnits, professorId) VALUES ('{'VT' + new_EmployeeId}', 'Vacant Time', '', 0, {new_EmployeeId})"
         checkResult = executeQuery(checkQuery)
@@ -71,7 +71,7 @@ def index():
         return redirect(url_for("login")) # IF: Not logged in, redirect to login page
     
     else:
-        getProfessorsQuery = "SELECT employeeId, employeeName FROM Professors WHERE employeeId != 0000"
+        getProfessorsQuery = "SELECT employeeId, employeeName, employeeSchedule FROM Professors WHERE employeeId != 0000"
         professorData = executeQuery(getProfessorsQuery)
 
         getCoursesQuery = "SELECT * FROM Courses"
@@ -102,7 +102,7 @@ def admin():
         return redirect(url_for("login")) # IF: Not logged in, redirect to login page
     
     else:
-        getProfessorsQuery = "SELECT employeeId, employeeName FROM Professors WHERE employeeId != 0000"
+        getProfessorsQuery = "SELECT employeeId, employeeName, employeeSchedule FROM Professors WHERE employeeId != 0000"
         professorData = executeQuery(getProfessorsQuery)
 
         getCoursesQuery = "SELECT * FROM Courses"
@@ -309,7 +309,6 @@ def admin():
                                 scheduleData=scheduleData,
                                 current_professor=0)
 
-            # WIP: Delete Course Feature
             if action == "deleteCourse":
                 selectedCourseId = request.form["courseToBeDeleted"]
                 deleteFromCourses = f"DELETE FROM Courses WHERE courseId = '{selectedCourseId}'"
@@ -319,6 +318,17 @@ def admin():
                 executeQuery(deleteFromCourseSchedules)
                 executeQuery(deleteFromCourses)
                 return redirect(url_for('admin'))
+            
+            if action == "markComplete":
+                markCompleteQuery = f"UPDATE Professors SET employeeSchedule == 'Complete' WHERE employeeId = {current_professor}"
+                executeQuery(markCompleteQuery)
+                return redirect(url_for('admin'))
+            
+            if action == "markIncomplete":
+                markIncompleteQuery = f"UPDATE Professors SET employeeSchedule == 'Incomplete' WHERE employeeId = {current_professor}"
+                executeQuery(markIncompleteQuery)
+                return redirect(url_for('admin'))
+
 
         print(request.form)
 
