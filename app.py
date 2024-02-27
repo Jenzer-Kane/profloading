@@ -322,7 +322,7 @@ def admin():
             if action == "deleteUser":
                 current_professor = request.form['professorDetails']
                 deleteProfessorSchedule = f"DELETE FROM CourseSchedules WHERE professorId = {current_professor}"
-                deleteProfessor = f"DELETE FROM Professor WHERE employeeId = {current_professor}"
+                deleteProfessor = f"DELETE FROM Professors WHERE employeeId = {current_professor}"
                 updateCourses = f"UPDATE Courses SET professorId = '' WHERE professorId = {current_professor}"
                 executeQuery(deleteProfessorSchedule)
                 executeQuery(updateCourses)
