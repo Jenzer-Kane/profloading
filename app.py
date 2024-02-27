@@ -318,14 +318,26 @@ def admin():
                 executeQuery(deleteFromCourseSchedules)
                 executeQuery(deleteFromCourses)
                 return redirect(url_for('admin'))
+
+            if action == "deleteUser":
+                current_professor = request.form['professorDetails']
+                deleteProfessorSchedule = f"DELETE FROM CourseSchedules WHERE professorId = {current_professor}"
+                deleteProfessor = f"DELETE FROM Professor WHERE employeeId = {current_professor}"
+                updateCourses = f"UPDATE Courses SET professorId = '' WHERE professorId = {current_professor}"
+                executeQuery(deleteProfessorSchedule)
+                executeQuery(updateCourses)
+                executeQuery(deleteProfessor)
+                return redirect(url_for('admin'))
             
             if action == "markComplete":
-                markCompleteQuery = f"UPDATE Professors SET employeeSchedule == 'Complete' WHERE employeeId = {current_professor}"
+                current_professor = request.form['professorDetails']
+                markCompleteQuery = f"UPDATE Professors SET employeeSchedule = 'Complete' WHERE employeeId = {current_professor}"
                 executeQuery(markCompleteQuery)
                 return redirect(url_for('admin'))
             
             if action == "markIncomplete":
-                markIncompleteQuery = f"UPDATE Professors SET employeeSchedule == 'Incomplete' WHERE employeeId = {current_professor}"
+                current_professor = request.form['professorDetails']
+                markIncompleteQuery = f"UPDATE Professors SET employeeSchedule = 'Incomplete' WHERE employeeId = {current_professor}"
                 executeQuery(markIncompleteQuery)
                 return redirect(url_for('admin'))
 

@@ -11,8 +11,16 @@
       .hidden {
         display: block;
       }
+      
+      .markScheduleDiv {
+        display: block;
+      }
 
       .hiddenDivScheduleButton {
+        display: block;
+      }
+
+      .deleteAccountDiv {
         display: block;
       }
 
@@ -128,12 +136,16 @@
         var hiddenHonorariumVacancyButton = document.getElementById(
           "hiddenHonorariumVacancy"
         );
+        var deleteAccount = document.getElementById(
+          'deleteAccountDiv');
 
         if (selectedValue != professorHolderVariable) {
           hiddenDiv.style.display = "none";
           hiddenCheckScheduleButton.style.display = "block";
           hiddenHonorariumVacancyButton.style.display = "block";
           document.getElementById("choiceLabel").style.display = "block";
+          document.getElementById('markScheduleDiv').style.display = "none";
+          deleteAccount.style.display = "none";
         }
       }
 
@@ -996,32 +1008,41 @@
                           Delete A Course
                         </button>
                       </div>
+                      
                       {% for schedType in professorData if schedType[0] == current_professor %}
                         {% if schedType[2] == 'Incomplete' %}
-                          <div class="col-2 py-4">
+                          <div class="col-2 py-4" id="markScheduleDiv">
                             <button
-                              type="submit"
-                              name="markComplete"
+                              type="button"
                               class="btn btn-primary"
                               data-bs-toggle="modal"
-                              data-bs-target="#addNewCourses"
+                              data-bs-target="#completeSched"
                             >
-                              Mark as Complete
+                              Mark As Complete
                             </button>
                           </div>
                         {% elif schedType[2] == 'Complete' %}
-                          <div class="col-2 py-4">
+                          <div class="col-2 py-4" id="markScheduleDiv">
                             <button
-                              type="submit"
-                              name="markIncomplete"
+                              type="button"
                               class="btn btn-secondary"
                               data-bs-toggle="modal"
-                              data-bs-target="#addNewCourses"
+                              data-bs-target="#incompleteSched"
                             >
-                              Mark as Incomplete
+                              Mark As Incomplete
                             </button>
                           </div>
                         {% endif %}
+                        <div class="col-2 py-4" id="deleteAccountDiv">
+                          <button
+                            type="button"
+                            class="btn btn-danger"
+                            data-bs-toggle="modal"
+                            data-bs-target="#deleteCurrentAccount"
+                          >
+                            Delete Account
+                          </button>
+                        </div>
                       {% endfor %}
                     </div>
                   </div>
@@ -1234,6 +1255,147 @@
           </div>
         </div>
       </div>
+
+      <div
+        class="modal fade"
+        id="deleteCurrentAccount"
+        aria-hidden="true"
+        aria-labelledby="exampleModalToggleLabel2"
+        tabindex="-1"
+      >
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="exampleModalToggleLabel2">
+                Confirm Changes
+              </h1>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            {% for prof in professorData if prof[0] == current_professor %}
+              <div class="modal-body">
+                Are you sure you want to delete <b>Professor {{prof[1]}}</b> from the system?
+              </div>
+            {% endfor %}
+            <div class="modal-footer">
+              <button
+                type="submit"
+                name="btn"
+                class="btn btn-primary"
+                data-bs-dismiss="modal"
+                value="deleteUser"
+                formnovalidate
+              >
+                Yes, delete it
+              </button>
+              <button
+                class="btn btn-secondary"
+                type="button"
+                data-bs-toggle="modal"
+              >
+                No
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="modal fade"
+        id="completeSched"
+        aria-hidden="true"
+        aria-labelledby="exampleModalToggleLabel2"
+        tabindex="-1"
+      >
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="exampleModalToggleLabel2">
+                Confirm Changes
+              </h1>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div class="modal-body">
+              Are you sure you want to mark this schedule as <e>complete</e>?
+            </div>
+            <div class="modal-footer">
+              <button
+                type="submit"
+                name="btn"
+                class="btn btn-primary"
+                data-bs-dismiss="modal"
+                value="markComplete"
+                formnovalidate
+              >
+                Yes
+              </button>
+              <button
+                class="btn btn-secondary"
+                type="button"
+                data-bs-toggle="modal"
+              >
+                No
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="modal fade"
+        id="incompleteSched"
+        aria-hidden="true"
+        aria-labelledby="exampleModalToggleLabel2"
+        tabindex="-1"
+      >
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="exampleModalToggleLabel2">
+                Confirm Changes
+              </h1>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div class="modal-body">
+              Are you sure you want to mark this schedule as <e>incomplete</e>?
+            </div>
+            <div class="modal-footer">
+              <button
+                type="submit"
+                name="btn"
+                class="btn btn-primary"
+                data-bs-dismiss="modal"
+                value="markIncomplete"
+                formnovalidate
+              >
+                Yes
+              </button>
+              <button
+                class="btn btn-secondary"
+                type="button"
+                data-bs-toggle="modal"
+              >
+                No
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </form>
   </body>
 </html>
