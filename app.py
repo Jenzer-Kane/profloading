@@ -1,7 +1,7 @@
 # USERNAME: umakscheduler
 # PASSWORD: Adminschedule123
 
-from flask import Flask, render_template, redirect, request, session, url_for
+from flask import Flask, render_template, redirect, request, session, url_for, flash
 from flask_session import Session
 import pypyodbc as odbc
 
@@ -143,23 +143,29 @@ def admin():
 
             if action == 'checkProfessorSchedule':
                 scheduleMode = 1
-                current_professor = request.form['professorDetails']
-                return render_template('admin.html',
-                    professorData=professorData,
-                    courseData=courseData,
-                    scheduleData=scheduleData,
-                    current_professor=int(current_professor),
-                    scheduleMode=scheduleMode)
+                try:
+                    current_professor = request.form['professorDetails']
+                    return render_template('admin.html',
+                        professorData=professorData,
+                        courseData=courseData,
+                        scheduleData=scheduleData,
+                        current_professor=int(current_professor),
+                        scheduleMode=scheduleMode)
+                except:
+                    return redirect(url_for('admin'))
 
             if action == 'setHonorariumVacantTime':
                 scheduleMode = 2
-                current_professor = request.form['professorDetails']
-                return render_template('admin.html',
-                    professorData=professorData,
-                    courseData=courseData,
-                    scheduleData=scheduleData,
-                    current_professor=int(current_professor),
-                    scheduleMode=scheduleMode)
+                try:
+                    current_professor = request.form['professorDetails']
+                    return render_template('admin.html',
+                        professorData=professorData,
+                        courseData=courseData,
+                        scheduleData=scheduleData,
+                        current_professor=int(current_professor),
+                        scheduleMode=scheduleMode)
+                except:
+                    return redirect(url_for('admin'))
 
             if action == 'manageCourse':
                 current_course = request.form['currentCourse'].upper()
@@ -322,9 +328,11 @@ def admin():
             if action == "deleteUser":
                 current_professor = request.form['professorDetails']
                 deleteProfessorSchedule = f"DELETE FROM CourseSchedules WHERE professorId = {current_professor}"
+                deleteHonorariumVacant = f"DELETE FROM Courses WHERE courseId = '{'HT' + current_professor}' or courseId = '{'VT' + current_professor}'"
                 deleteProfessor = f"DELETE FROM Professors WHERE employeeId = {current_professor}"
                 updateCourses = f"UPDATE Courses SET professorId = '' WHERE professorId = {current_professor}"
                 executeQuery(deleteProfessorSchedule)
+                executeQuery(deleteHonorariumVacant)
                 executeQuery(updateCourses)
                 executeQuery(deleteProfessor)
                 return redirect(url_for('admin'))
