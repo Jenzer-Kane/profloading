@@ -20,15 +20,40 @@
       integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
       crossorigin="anonymous"
     ></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:ital,wght@0,300..900;1,300..900&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      .red-hat-display-custom {
+        font-family: "Red Hat Display", sans-serif;
+        font-optical-sizing: auto;
+        font-weight: 600;
+        font-style: medium;
+      }
+
+      .navbar-bg {
+        background-color: #121c4a;
+      }
+
+      .img-size {
+        
+      }
+    </style>
   </head>
-  
+
   <body class="bg-tertiary">
     <form method="POST">
-      <nav class="navbar navbar-expand-lg bg-body-secondary">
+      <nav class="navbar navbar-expand-sm navbar-bg">
         <div class="container-fluid">
-          <a class="navbar-brand" href="#">University of Makati</a>
+          <a class="navbar-brand red-hat-display-custom" href="#">
+            <img src="{{url_for('static', filename='logo.png')}}">
+          </a>
           <button
-            class="navbar-toggler"
+            class="navbar-toggler bg-light"
             type="button"
             data-bs-toggle="collapse"
             data-bs-target="#navbarText"
@@ -39,23 +64,20 @@
             <span class="navbar-toggler-icon"></span>
           </button>
           <div class="collapse navbar-collapse" id="navbarText">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <ul class="navbar-nav ms-auto mb-lg-0">
               <li class="nav-item">
-                <a class="nav-link active" aria-current="page" href="#"></a>
+                <button
+                  class="btn btn-primary red-hat-display-custom"
+                  type="submit"
+                  aria-current="page"
+                  name="btn"
+                  value="logout"
+                  formnovalidate
+                >
+                  LOG OUT
+                </button>
               </li>
             </ul>
-            <span class="navbar-text">
-              <button
-                class="btn btn-primary"
-                type="submit"
-                aria-current="page"
-                name="btn"
-                value="logout"
-                formnovalidate
-              >
-                Logout
-              </button>
-            </span>
           </div>
         </div>
       </nav>

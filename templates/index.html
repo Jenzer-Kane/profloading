@@ -1,4 +1,5 @@
 {% extends "base.html" %} {% block content %}
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -43,7 +44,7 @@
         vertical-align: middle;
       }
 
-      @media (max-width: 575px){
+      @media (max-width: 991px) {
         #notificationAlert {
           width: 100%
         }
@@ -59,7 +60,25 @@
         #tableOrButtons {
           margin-top: 10px;
         }
+      }
 
+      .red-hat-display-custom {
+        font-family: "Red Hat Display", sans-serif;
+        font-optical-sizing: auto;
+        font-weight: 600;
+        font-style: normal;
+      }
+
+      .red-hat-display-bold {
+        font-family: "Red Hat Display", sans-serif;
+        font-optical-sizing: auto;
+        font-weight: 700;
+        font-style: normal;
+        font-size: large;
+      }
+
+      body {
+        background: rgb(243, 243, 243);
       }
     </style>
 
@@ -74,12 +93,12 @@
 
   <body>
     <div class="container-md" id="mainContainer">
-      <div class="bg-primary-subtle p-md-4 p-sm-3 p-3 pb-3 mt-3 rounded-4 m-md-5" id="scheduleContainer">
+      <div class="bg-primary-subtle p-md-4 p-sm-3 p-3 pb-3 rounded-3 mt-md-5 mx-md-5 mt-3" id="scheduleContainer">
         {% for prof in professorData if prof[0] == current_professor and prof[2] == 'Complete' %}
 
-        <div class="container-xl">
+        <div class="container">
           <div class="alert alert-info pt-4 text-center" id="notificationAlert">
-            <h4>Schedule for <b>{{ prof[1] }}</b> is available.</h4>
+            <h4 class="red-hat-display-custom">Schedule for <b>{{ prof[1] }}</b> is available.</h4>
             <p id="tableOrButtons">See content below for details.</p>
           </div>
         </div>
@@ -658,12 +677,12 @@
 
           {% else %}
           <div class="alert alert-info border-3 mt-3 text-center" id="alertNoSchedule">
-            <b>Sorry! Your current schedule is not yet complete. </b><br/>
-            Please wait for your schedule to be posted. <br/>
+            <b class="red-hat-display-bold">Sorry! Your current schedule is not yet complete. </b><br/>
+            <small>Please wait for your schedule to be posted. </small>
           </div>
         </div>
         {% endfor %}
-        <p class="text-center"><small>If there are problems with your schedule, please <a href="https://www.umak.edu.ph/help/directory/#toggle-id-5">contact the site administrator.</a></small></p>
+        <p class="text-center m-2"><small>If there are problems with your schedule, please <a href="https://www.umak.edu.ph/help/directory/#toggle-id-5">contact the site administrator.</a></small></p>
       </div>
     </div>
 
