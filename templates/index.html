@@ -80,6 +80,14 @@
       body {
         background: rgb(243, 243, 243);
       }
+
+      .tbl-rounded{
+        border-spacing: 0;
+        border-collapse: separate;
+        border: solid rgb(206, 206, 206) 1px;
+        border-radius: 10px;
+        overflow: hidden;
+      }
     </style>
 
     <script>
@@ -106,7 +114,7 @@
         <div class="container">
           <!-- TABLE HTML CODE (IT'S NOT EFFICIENT, BUT IT WORKS, PLEASE EDIT WITH CAUTION!)-->
 
-          <table class="table table-striped table-sm text-center mt-4" id="scheduleTable">
+          <table class="table table-striped table-sm text-center mt-4 tbl-rounded" id="scheduleTable">
             <thead>
               <tr>
                 <th scope="col">Time</th>
