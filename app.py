@@ -3,9 +3,13 @@
 
 from flask import Flask, render_template, redirect, request, session, url_for, flash
 from flask_session import Session
+from werkzeug.utils import secure_filename
+import os
 import pypyodbc as odbc
 
 app = Flask(__name__)
+app.config["SECRET_KEY"] = "secret"
+app.config["UPLOAD_FOLDER"] = "static/files"
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
@@ -135,22 +139,23 @@ def admin():
 
                 if checkResult:
                     print("TEST (Admin Page): The course already exists!") # TEST: Test Validation
-                    return redirect(url_for('admin'))
                 else:
                     executeQuery(insertQuery)
                     print("TEST (Admin Page): You have inserted into the database!") # TEST: Test Validation
-                    return redirect(url_for('admin'))
-
-            if action == 'checkProfessorSchedule':
-                scheduleMode = 1
-                try:
-                    current_professor = request.form['professorDetails']
+                    professorData = executeQuery(getProfessorsQuery)
+                    courseData = executeQuery(getCoursesQuery)
+                    scheduleData = executeQuery(getCourseSchedulesQuery)
                     return render_template('admin.html',
                         professorData=professorData,
                         courseData=courseData,
                         scheduleData=scheduleData,
                         current_professor=int(current_professor),
                         scheduleMode=scheduleMode)
+
+            if action == 'checkProfessorSchedule':
+                scheduleMode = 1
+                try:
+                    current_professor = request.form['professorDetails']
                 except:
                     return redirect(url_for('admin'))
 
@@ -158,16 +163,11 @@ def admin():
                 scheduleMode = 2
                 try:
                     current_professor = request.form['professorDetails']
-                    return render_template('admin.html',
-                        professorData=professorData,
-                        courseData=courseData,
-                        scheduleData=scheduleData,
-                        current_professor=int(current_professor),
-                        scheduleMode=scheduleMode)
                 except:
                     return redirect(url_for('admin'))
 
             if action == 'manageCourse':
+                scheduleMode = 1
                 current_course = request.form['currentCourse'].upper()
                 current_professor = request.form['professorDetails']
                 newCourseSection = request.form['courseSection'].upper()
@@ -199,7 +199,6 @@ def admin():
                                         FROM CourseSchedules
                                         WHERE professorId = {int(current_professor)}
                                         AND courseId = '{current_course}'
-                                        AND dayOfWeek = '{newDayOfWeek}'
                                         GROUP BY professorId
                                         HAVING SUM(DATEDIFF(MINUTE, startTime, endTime) / 60.0) >= 3;
                                         """
@@ -209,56 +208,60 @@ def admin():
                     if (ifProfessorExists == True): # IF: Current professor being assigned is assigned to the current_course -> proceed with logic
                         if (executeQuery(checkIfSameTime)):
                             print("\n\nTEST (Admin Page): There is a subject already assigned in the same time!\n\n") # TEST: Test Validation
-                            return redirect(url_for('admin'))
-
                         else:
                             if (executeQuery(checkExceeds3Hours)):
                                 print("\n\nTEST (Admin Page): Already has 3 hours in slot!\n\n") # TEST: Test Validation
-                                return redirect(url_for('admin'))
                             else:
                                 print("\n\nTEST (Admin Page): Inserted into the database!\n\n") # TEST: Test Validation
                                 executeQuery(insertScheduleQuery)
+                                professorData = executeQuery(getProfessorsQuery)
+                                courseData = executeQuery(getCoursesQuery)
+                                scheduleData = executeQuery(getCourseSchedulesQuery)
                                 return render_template('admin.html',
                                     professorData=professorData,
                                     courseData=courseData,
                                     scheduleData=scheduleData,
-                                    current_professor=0)
+                                    current_professor=int(current_professor),
+                                    scheduleMode=scheduleMode)
 
                     else:
                         if (ifNoProfessorExists):
-                            # NOTE: This if-block needs to be converted into a function for easier debugging
                             if (executeQuery(checkIfSameTime)):
                                 print("\n\nTEST (Admin Page): This subject is already assigned in the same time!\n\n") # TEST: Test Validation
-                                return redirect(url_for('admin'))
-
                             else:
                                 if (executeQuery(checkExceeds3Hours)):
                                     print("\n\nTEST (Admin Page): Already has 3 hours in slot!\n\n") # TEST: Test Validation
-                                    return redirect(url_for('admin'))
                                 else:
                                     print("\n\nTEST (Admin Page): Inserted into the database!\n\n") # TEST: Test Validation
                                     executeQuery(insertScheduleQuery)
                                     executeQuery(updateCourseQuery)
+                                    professorData = executeQuery(getProfessorsQuery)
+                                    courseData = executeQuery(getCoursesQuery)
+                                    scheduleData = executeQuery(getCourseSchedulesQuery)
                                     return render_template('admin.html',
                                         professorData=professorData,
                                         courseData=courseData,
                                         scheduleData=scheduleData,
-                                        current_professor=0)
-                        
+                                        current_professor=int(current_professor),
+                                        scheduleMode=scheduleMode)
                         else:
                             print("\n\nTEST (Admin Page): There is already a professor assigned in this course!\n\n") # TEST: Test Validation
-                            return redirect(url_for('admin'))
 
                 else: # ELSE: If no records exist, insert new schedule into the table
                     executeQuery(insertScheduleQuery)
                     executeQuery(updateCourseQuery)
+                    professorData = executeQuery(getProfessorsQuery)
+                    courseData = executeQuery(getCoursesQuery)
+                    scheduleData = executeQuery(getCourseSchedulesQuery)
                     return render_template('admin.html',
                         professorData=professorData,
                         courseData=courseData,
                         scheduleData=scheduleData,
-                        current_professor=0)
+                        current_professor=int(current_professor),
+                        scheduleMode=scheduleMode)
 
             if action == 'insertHonorariumVacant':
+                scheduleMode = 2
                 current_professor = request.form['professorDetails']
                 otherScheduleType = request.form['honorVacantChoice']
                 honorVacantDayOfWeek = request.form['honorVacantDayOfWeek']
@@ -292,28 +295,33 @@ def admin():
                 if scheduleData:
                     if (executeQuery(checkSameHonorVacantTime)):
                         print(f"\n\nTEST (Admin Page): {otherScheduleType} is already assigned in the same time!\n\n") # TEST: Test Validation
-                        return redirect(url_for('admin'))
                     else:
                         if (executeQuery(checkExceedsHourMins)):
                             print("\n\nTEST (Admin Page): Already has 1.5 hours in slot!\n\n") # TEST: Test Validation
-                            return redirect(url_for('admin'))
                         else:
                             print("\n\nTEST (Admin Page): Inserted into the database!\n\n") # TEST: Test Validation
                             executeQuery(insertHonorVacantQuery)
+                            professorData = executeQuery(getProfessorsQuery)
+                            courseData = executeQuery(getCoursesQuery)
+                            scheduleData = executeQuery(getCourseSchedulesQuery)
                             return render_template('admin.html',
                                 professorData=professorData,
                                 courseData=courseData,
                                 scheduleData=scheduleData,
-                                current_professor=0)
-                
+                                current_professor=int(current_professor),
+                                scheduleMode=scheduleMode)
                 else:
                     executeQuery(insertHonorVacantQuery)
                     print("\n\nTEST (Admin Page): Inserted into the database!\n\n") # TEST: Test Validation
+                    professorData = executeQuery(getProfessorsQuery)
+                    courseData = executeQuery(getCoursesQuery)
+                    scheduleData = executeQuery(getCourseSchedulesQuery)
                     return render_template('admin.html',
-                                professorData=professorData,
-                                courseData=courseData,
-                                scheduleData=scheduleData,
-                                current_professor=0)
+                        professorData=professorData,
+                        courseData=courseData,
+                        scheduleData=scheduleData,
+                        current_professor=int(current_professor),
+                        scheduleMode=scheduleMode)
 
             if action == "deleteCourse":
                 selectedCourseId = request.form["courseToBeDeleted"]
@@ -323,7 +331,15 @@ def admin():
                 # NOTE: Schedules first, then the course information after
                 executeQuery(deleteFromCourseSchedules)
                 executeQuery(deleteFromCourses)
-                return redirect(url_for('admin'))
+                professorData = executeQuery(getProfessorsQuery)
+                courseData = executeQuery(getCoursesQuery)
+                scheduleData = executeQuery(getCourseSchedulesQuery)
+                return render_template('admin.html',
+                    professorData=professorData,
+                    courseData=courseData,
+                    scheduleData=scheduleData,
+                    current_professor=int(current_professor),
+                    scheduleMode=scheduleMode)
 
             if action == "deleteUser":
                 current_professor = request.form['professorDetails']
@@ -341,23 +357,39 @@ def admin():
                 current_professor = request.form['professorDetails']
                 markCompleteQuery = f"UPDATE Professors SET employeeSchedule = 'Complete' WHERE employeeId = {current_professor}"
                 executeQuery(markCompleteQuery)
-                return redirect(url_for('admin'))
-            
+                professorData = executeQuery(getProfessorsQuery)
+                courseData = executeQuery(getCoursesQuery)
+                scheduleData = executeQuery(getCourseSchedulesQuery)
+                return render_template('admin.html',
+                    professorData=professorData,
+                    courseData=courseData,
+                    scheduleData=scheduleData,
+                    current_professor=int(current_professor),
+                    scheduleMode=1)
+
             if action == "markIncomplete":
                 current_professor = request.form['professorDetails']
                 markIncompleteQuery = f"UPDATE Professors SET employeeSchedule = 'Incomplete' WHERE employeeId = {current_professor}"
                 executeQuery(markIncompleteQuery)
-                return redirect(url_for('admin'))
+                professorData = executeQuery(getProfessorsQuery)
+                courseData = executeQuery(getCoursesQuery)
+                scheduleData = executeQuery(getCourseSchedulesQuery)
+                return render_template('admin.html',
+                    professorData=professorData,
+                    courseData=courseData,
+                    scheduleData=scheduleData,
+                    current_professor=int(current_professor),
+                    scheduleMode=1)
 
-
-        print(request.form)
+            if action == "Upload":
+                insertImportedSubjectsQuery = "INSERT INTO Table"
 
         return render_template('admin.html',
-            professorData=professorData,
-            courseData=courseData,
-            scheduleData=scheduleData,
-            current_professor=int(current_professor),
-            scheduleMode=scheduleMode)
+                professorData=professorData,
+                courseData=courseData,
+                scheduleData=scheduleData,
+                current_professor=int(current_professor),
+                scheduleMode=scheduleMode,)
 
 # CODE BLOCK: Executing the queries
 def executeQuery(checkQuery, params=None):

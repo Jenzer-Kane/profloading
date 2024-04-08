@@ -1,0 +1,40 @@
+NOTES: 
+functioning authorization, separation of dean and faculty modules, design is clean,
+simple to understand, fully functional, 
+
+
+MORE:
+
+NEW FEATURE (++):
+MAKE ADMIN MODULE? (asides dean and faculty, not sure if still within scope of study)
+
+DEAN MODULE
+ADD (+):
++ option to import subjects? (button, etc)
+=> mass import from excel file, not singular
+
++ greedy algorithm, if nasetan na yung subject, di na sya magiging available 
+and mag auto-select sa next unset subject sa professor, 
+=> if specific professor has assigned subject, other professors should not be able to see assigned subject to specific professor
+
+(di ko lang sure kung tama yung logic, what if the subject is taught more 
+than once in a week / or let it not exceed more than 2 times in a week)
+=> subject must not exceed 3 hours per week (good)
+
++ sched change request viewer / handler (chatbox or change requests are on 
+colored dropboxes like sa changes made in a github repo before commit)
+=> just like ThinkBitSolutions contact page, user interface (modal) and new admin page for viewing/altering inquiries from users (professors)
+
++ Gayahin yung layout ng COR? or ng orig na Teacher's Program (PENDING)
+
+FIX (-): 
+- Nagreredirect sa Add Course page after mag set ng
+sched sa schedule table
+==> should redirect back to current schedule of the current professor
+
+-  no schedule to be displayed sa homepage after mag finalize ng 
+sched for prof and sinelect sya sa homepage
+==> should redirect back to current schedule of the current professor
+
+
+(Make sure to have a URL)

@@ -1,0 +1,27 @@
+import pandas as pd
+
+data = []
+course_codes = []
+df = pd.read_excel('subject_data.xlsx')
+unique_values = df.drop_duplicates(subset=["COURSE CODE"], keep='first')
+
+query = f"INSERT INTO Courses (courseId, courseName, courseYear, courseUnits) VALUES "
+
+for index, row in unique_values.iterrows():
+    if (type(row['COURSE CODE']) == float 
+    and type(row['DESCRIPTION']) == float
+    and type(row['UNITS']) == float):
+        continue
+
+    data.append((row['COURSE CODE'], row['DESCRIPTION'], "", int(row['UNITS'])))
+
+ctr = 0
+
+for x in data:
+    if ctr != len(data)-1:
+        query += str(x) + ", "
+    else:
+        query += str(x)
+    ctr += 1
+
+print(query)

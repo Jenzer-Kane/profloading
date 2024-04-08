@@ -172,7 +172,7 @@
     </script>
   </head>
   <body class="bg-tertiary-subtle">
-    <form method="POST">
+    <form method="POST" enctype="multipart/form-data">
       <div class="container-fluid" id="mainContainer">
         <div class="row pt-4">
           <div class="col-3"></div>
@@ -984,15 +984,11 @@
                     class="justify-content-center bg-light container py-3 px-4"
                     id="optionsBox"
                     type="button"
-                    data-bs-toggle="collapse"
                     data-bs-target="#additionalOptions"
                   >
                     <div class="row">
                       <div class="col d-flex justify-content-start">
-                        <h5 style="margin-top: 1.3vh">Administrator Options</h5>
-                      </div>
-                      <div class="col d-flex justify-content-end">
-                        <p style="margin-top: 1.3vh"><u>Show/Hide</u></p>
+                        <h5 class="py-2">Administrator Options</h5>
                       </div>
                     </div>
 
@@ -1006,7 +1002,7 @@
                           type="button"
                           class="btn btn-success"
                           data-bs-toggle="modal"
-                          data-bs-target="#addNewCourses"
+                          data-bs-target="#chooseAddMode"
                         >
                           Add New Course
                         </button>
@@ -1067,6 +1063,47 @@
       </div>
 
       <!-- ADDING NEW COURSES -->
+      <div
+        class="modal fade"
+        id="chooseAddMode"
+        tabindex="-1"
+        aria-labelledby="exampleModalLabel"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="exampleModalLabel">Choose Adding Mode</h1>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="row text-center">
+                <div class="col">
+                  <button 
+                    type="button" 
+                    class="btn btn-primary" 
+                    data-bs-toggle="modal"
+                    data-bs-target="#addNewCourses"
+                  >
+                    Add Courses Individually
+                  </button>
+                </div>
+                <div class="col">
+                  <button 
+                    type="button" 
+                    class="btn btn-secondary" 
+                    data-bs-toggle="modal"
+                    data-bs-target="#importExcel"
+                  >
+                    Import Courses from File
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div
         class="modal fade"
         id="addNewCourses"
@@ -1143,7 +1180,8 @@
               <button
                 type="button"
                 class="btn btn-secondary"
-                data-bs-dismiss="modal"
+                data-bs-toggle="modal"
+                data-bs-target="#chooseAddMode"
               >
                 Close
               </button>
@@ -1155,6 +1193,44 @@
                 formnovalidate
               >
                 Add Course
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="modal fade"
+        id="importExcel"
+        tabindex="-1"
+        aria-labelledby="exampleModalLabel"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="exampleModalLabel">
+                Import Courses (via Excel File)
+              </h1>
+            </div>
+            <div class="modal-body">
+              <div class="row text-center">
+                <div class="col">
+                  <input type="file" name="file"/>
+                </div>
+                <div class="col">
+                  <input type="submit" name="btn" value="Upload">
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-toggle="modal"
+                data-bs-target="#chooseAddMode"
+              >
+                Close
               </button>
             </div>
           </div>
@@ -1408,6 +1484,13 @@
         </div>
       </div>
 
+      <div class="py-5 container text-center">
+        <h3>User Request Tab</h3>
+        <hr>
+        <button type="button" class="btn btn-primary text-center pt-2">
+          <h5>See Requests</h5>
+        </button>
+      </div>
     </form>
   </body>
 </html>
