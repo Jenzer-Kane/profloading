@@ -1,0 +1,133 @@
+{% extends "base.html" %} {% block content %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inquiries</title>
+    <script>
+        function setInquiryID(idValue){
+            let field = document.getElementById("rawtext")
+            field.setAttribute('value', idValue)
+        }
+    </script>
+  </head>
+  <body>
+
+    <div class="row py-4">
+        <div class="col-4 ps-5">
+            <button class="btn btn-secondary" name="btn" value="backToAdminPage">Back</button>
+        </div>
+    </div>
+
+    <div class="row pb-4">
+      <div class="col-3"></div>
+      <div class="alert alert-info col-6 mt-3" role="alert">
+        <h5 class="text-center mt-3"><b>User Requests</b> are available.</h5>
+        <p class="text-center">See content below for details.</p>
+      </div>
+    </div>
+
+    <div class="container">
+      <table class="table text-center  table-hover">
+        <thead>
+          <tr>
+            <th scope="col">User ID</th>
+            <th scope="col">Subject</th>
+            <th scope="col">Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for data in inquiryData if data[4] == 'Unresolved' %}
+          <tr>
+            <td>{{data[1]}}</td>
+            <td>{{data[2]}}</td>
+            <td>
+              <button
+                type="button"
+                class="btn btn-primary"
+                data-bs-toggle="modal"
+                data-bs-target="#details{{data[0]}}"
+                onclick="setInquiryID('{{data[0]}}')"
+              >
+                Details
+              </button>
+            </td>
+          </tr>
+
+          <div
+            class="modal fade"
+            id="details{{data[0]}}"
+            tabindex="-1"
+            arial-labelledby="staticBackdropLabel"
+            aria-hidden="true"
+          >
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h1 class="modal-title fs-5" id="staticBackdropLabel">
+                    Inquiry Details
+                  </h1>
+                </div>
+                <div class="modal-body">
+                  <div class="row text-center">
+                    <div class="col-8">
+                      <hr />
+                    </div>
+                    <div class="col">
+                      <small>Mark as Resolved</small>
+                    </div>
+                    <div class="col">
+                      <small>Deny Request</small>
+                    </div>
+                  </div>
+                  <div class="row text-center align-items-center">
+                    <div class="col-8">
+                      <div class="alert alert-secondary">
+                        <p style="word-wrap: break-word">{{data[3]}}</p>
+                      </div>
+                    </div>
+                    <div class="col">
+                      <div class="alert alert-light">
+                        <button type="submit" name="btn" value="resolveInquiry" class="btn btn-success">✔</button>
+                      </div>
+                    </div>
+                    <div class="col">
+                      <div class="alert alert-light">
+                        <button type="submit" name="btn" value="denyInquiry" class="btn btn-danger">✖</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#chooseAddMode"
+                  >
+                    Close
+                  </button>
+                  <button
+                    type="submit"
+                    name="btn"
+                    value="submitInquiry"
+                    class="btn btn-primary"
+                  >
+                    Submit
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <input type="hidden" id="rawtext" name="currentId" value="0">
+    </div>
+  </body>
+</html>
+{% endblock %}

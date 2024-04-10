@@ -1,17 +1,19 @@
 # USERNAME: umakscheduler
 # PASSWORD: Adminschedule123
 
-from flask import Flask, render_template, redirect, request, session, url_for, flash
+from flask import Flask, render_template, redirect, request, session, url_for
 from flask_session import Session
 from werkzeug.utils import secure_filename
 import os
 import pypyodbc as odbc
+import process_excel as pe
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "secret"
-app.config["UPLOAD_FOLDER"] = "static/files"
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
+
+app.config["UPLOAD_FOLDER"] = "static/files/"
+ALLOWED_EXTENSIONS = {'xlsx'}
 Session(app)
 
 server = 'umakclassscheduler.database.windows.net'
@@ -75,6 +77,7 @@ def index():
         return redirect(url_for("login")) # IF: Not logged in, redirect to login page
     
     else:
+        currentId = int(session['userId'])
         getProfessorsQuery = "SELECT employeeId, employeeName, employeeSchedule FROM Professors WHERE employeeId != 0000"
         professorData = executeQuery(getProfessorsQuery)
 
@@ -84,14 +87,19 @@ def index():
         getCourseSchedulesQuery = "SELECT * FROM CourseSchedules"
         scheduleData = executeQuery(getCourseSchedulesQuery)
 
-        currentId = int(session['userId'])
-
         if request.method == 'POST':
             action = request.form['btn']
 
             if action == 'logout':
                 session.pop('userId', 0)
                 return redirect("/login")
+
+            if action == 'submitInquiry':
+                inquirySubject = request.form['messageSubject']
+                inquiryMessage = request.form['message']
+                insertInquiryQuery = f"INSERT INTO ProfessorInquiries (professorId, inqSubject, inqMessage, inqStatus) VALUES ({currentId}, '{inquirySubject}', '{inquiryMessage}', 'Unresolved')"
+                executeQuery(insertInquiryQuery)
+                return "<script>alert('Your response was recorded.')</script>"
 
         return render_template("index.html",
         current_professor=currentId,
@@ -381,15 +389,74 @@ def admin():
                     current_professor=int(current_professor),
                     scheduleMode=1)
 
-            if action == "Upload":
-                insertImportedSubjectsQuery = "INSERT INTO Table"
+            if action == "uploadExcel":
+                if 'file' not in request.files:
+                    return '<script>alert("File not found.");</script>'
+                
+                file = request.files['file']
+                if file.filename == '':
+                    return "No selected file."
+                if file and allowed_file(file.filename):
+                    filename = secure_filename(file.filename)
+                    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                    executeQuery(pe.readContents(filename))
+                    return '<script>alert("Subjects have been successfully imported.");window.location.href="/admin";</script>'
+
+            if action == "inquiries":
+                return redirect(url_for('inquiries'))
 
         return render_template('admin.html',
                 professorData=professorData,
                 courseData=courseData,
                 scheduleData=scheduleData,
                 current_professor=int(current_professor),
-                scheduleMode=scheduleMode,)
+                scheduleMode=scheduleMode)
+
+# CODE BLOCK: User Inquiries
+@app.route('/admin/inquiries', methods=['GET', 'POST'])
+def inquiries():
+    if 'userId' not in session or session['userId'] != '0000':
+        return redirect(url_for("login")) # IF: Not logged in, redirect to login page
+        
+    else:
+        getInquiriesQuery = "SELECT * FROM ProfessorInquiries"
+        inquiryData = executeQuery(getInquiriesQuery)
+
+        getProfessorsQuery = "SELECT employeeId, employeeName, employeeSchedule FROM Professors WHERE employeeId != 0000"
+        professorData = executeQuery(getProfessorsQuery)
+
+        if request.method == "POST":
+            action = request.form['btn']
+
+            if action == 'logout':
+                session.pop('userId', 0)
+                return redirect("/login")
+
+            if action == 'backToAdminPage':
+                return redirect("/admin")
+            
+            if action == 'resolveInquiry':
+                currentId = int(request.form['currentId'])
+                resolveQuery = f"UPDATE ProfessorInquiries SET inqStatus = 'Resolved' WHERE ID = {currentId}"
+                executeQuery(resolveQuery)
+                inquiryData = executeQuery(getInquiriesQuery)
+                professorData = executeQuery(getProfessorsQuery)
+
+            if action == 'denyInquiry':
+                currentId = int(request.form['currentId'])
+                denyQuery = f"UPDATE ProfessorInquiries SET inqStatus = 'Denied' WHERE ID = {currentId}"
+                executeQuery(denyQuery)
+                inquiryData = executeQuery(getInquiriesQuery)
+                professorData = executeQuery(getProfessorsQuery)
+
+        return render_template('inquiries.html',
+        inquiryData=inquiryData,
+        professorData=professorData)
+
+# CODE BLOCK: Checking the file extension for import
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # CODE BLOCK: Executing the queries
 def executeQuery(checkQuery, params=None):

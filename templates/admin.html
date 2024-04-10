@@ -167,8 +167,6 @@
           document.getElementById("choiceLabel").style.display = "none";
         }
       };
-
-      console.log(scheduleMode);
     </script>
   </head>
   <body class="bg-tertiary-subtle">
@@ -1216,10 +1214,10 @@
             <div class="modal-body">
               <div class="row text-center">
                 <div class="col">
-                  <input type="file" name="file"/>
-                </div>
-                <div class="col">
-                  <input type="submit" name="btn" value="Upload">
+                  <div class="input-group">
+                    <input type="file" name="file" value="file" class="form-control" id="file" aria-describedby="inputGroupFileAddon04" aria-label="Upload"/>
+                    <button class="btn btn-success" type="submit" name="btn" value="uploadExcel" id="inputGroupFileAddon04">Upload</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1487,10 +1485,16 @@
       <div class="py-5 container text-center">
         <h3>User Request Tab</h3>
         <hr>
-        <button type="button" class="btn btn-primary text-center pt-2">
+        <button type="submit" name="btn" value="inquiries" formnovalidate class="btn btn-primary text-center pt-2">
           <h5>See Requests</h5>
         </button>
       </div>
+
+      <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+        99+
+        <span class="visually-hidden">unread messages</span>
+      </span>
+
     </form>
   </body>
 </html>
