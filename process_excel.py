@@ -1,3 +1,5 @@
+import pandas as pd
+
 def readContents(name):
     data = []
     course_codes = []
