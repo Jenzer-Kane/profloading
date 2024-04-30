@@ -96,6 +96,12 @@
         scheduleDay = clickedButton.value;
         console.log(scheduleDay)
       }
+      document.addEventListener('keydown', function(event) {
+    if (event.ctrlKey || event.altKey) {
+        event.preventDefault(); // Prevent default action
+        alert("This key is disabled.");
+      }
+      });
     </script>
   </head>
 
@@ -107,7 +113,7 @@
 
           <div class="container">
             <div class="alert alert-info pt-4 text-center" id="notificationAlert">
-              <h4 class="red-hat-display-custom">Schedule for <b>{{ prof[1] }}</b> is available.</h4>
+              <h4 class="red-hat-display-custom">Faculty Load for <b>{{ prof[1] }}</b> is available.</h4>
               <p id="tableOrButtons">See content below for details.</p>
             </div>
           </div>

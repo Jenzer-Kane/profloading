@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin Portal</title>
+    <title>CBFS Loading System | Main</title>
 
     <style>
       .hidden {
@@ -56,9 +56,10 @@
       }
 
     </style>
-
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script>
       var scheduleMode = 0;
+      
       function updateHiddenEndTime() {
         var endTime = $("#end-time").val();
         $("#hidden-endingTime").val(endTime);
@@ -66,17 +67,17 @@
 
       function updateEndTime() {
         var startTime = $("#start-time").val();
-        $("#end-time").empty();
-        var endTimeOptions = generateEndTimeOptions(startTime);
-        $("#end-time").append(endTimeOptions);
+        var courseDuration = parseFloat($("#courseDuration").val());
+        var endTimeOptions = generateEndTimeOptions(startTime, courseDuration);
+        $("#end-time").empty().append(endTimeOptions);
         updateHiddenEndTime();
       }
 
-      function generateEndTimeOptions(startTime) {
+      function generateEndTimeOptions(startTime, courseDuration) {
         var startTimeObj = new Date("2000-01-01 " + startTime);
         startTimeObj.setHours(
-          startTimeObj.getHours() + 1,
-          startTimeObj.getMinutes() + 30
+          startTimeObj.getHours() + Math.floor(courseDuration),
+          startTimeObj.getMinutes() + (courseDuration % 1 * 60)
         );
         var endTimeOptions = "";
 
@@ -88,13 +89,19 @@
           });
           endTimeOptions += `<option value="${endTimeValue}">${endTimeText} </option>`;
           startTimeObj.setHours(
-            startTimeObj.getHours() + 1,
-            startTimeObj.getMinutes() + 30
+            startTimeObj.getHours() + Math.floor(courseDuration),
+            startTimeObj.getMinutes() + (courseDuration % 1 * 60)
           );
         }
 
         return endTimeOptions;
       }
+      /* called whenever course duration dropdown changes */
+      $(document).ready(function() {
+        $('#course-duration').change(function() {
+          updateEndTime();
+        });
+        });
 
       function updateHonorVacantHiddenEndTime() {
         var endTime = $("#honor-vacant-end-time").val();
@@ -157,32 +164,83 @@
         }
       }
 
+      function specifyRoom() {
+        var roomChoice = document.getElementById("roomChoice");
+        var roomDiv = document.getElementById("roomDiv");
+        var valueRoom = roomChoice.value;
+        if (valueRoom == "F2F") {
+          roomDiv.style.display = "block";
+        }
+        else {
+          roomDiv.style.display = "none";
+        }
+      }
+
       window.onload = function () {
         var professorHolderVariable = "{{ current_professor }}";
+        var alertVariable = "{{ alertType }}"
         console.log(professorHolderVariable)
         if (professorHolderVariable != 0) {
+          document.getElementById("hiddenProfessorDetails").setAttribute("value", professorHolderVariable)
           document.getElementById("hiddenCheckSchedule").style.display = "none";
           document.getElementById("hiddenHonorariumVacancy").style.display =
             "none";
           document.getElementById("choiceLabel").style.display = "none";
         }
+        
+        if (alertVariable == "USER_LOGOUT") {
+          alert("You have been logged out.");
+          window.location.replace("/login");
+        }
+        if (alertVariable == "COURSE_EXISTS") {
+          alert("ERROR: This course already exists in the system. Please try again.");
+        }
+        if (alertVariable == "COURSE_ADD_SUCCESS") {
+          alert("Course has been added successfully.")
+        }
+        if (alertVariable == "INVALID_ROOM") {
+          alert("ERROR: The room stated is already being used by another schedule. Please try again.")
+        }
+        if (alertVariable == "GEN_END_IMPLICIT_DAYS") {
+          alert("ERROR: You cannot schedule GenEd classes on these specific days. Please try again.")
+        }
+        if (alertVariable == "COURSE_ALREADY_ASSIGNED") {
+          alert("ERROR: This course is already assigned to the same section or professor. Please try again.")
+        }
+        if (alertVariable == "INVALID_TIMESLOT") { 
+          alert("ERROR: This course is being scheduled at a timeframe that has an existing schedule. Please try again.");
+        }
+        if (alertVariable == "INVALID_MAXIMUM_HOURS_REACHED") {
+          alert("ERROR: This course has already reached its maximum hours. Please try again.")
+        }
+        if (alertVariable == "INVALID_HONORVACANT_EXISTING_TIMESLOT") {
+          alert("ERROR: Honorarium/Vacant is being scheduled at a timeframe that has an existing schedule. Please try again.")
+        }
+        if (alertVariable == "INVALID_HONORVACANT_MAXIMUM_HOURS_REACHED") {
+          alert("ERROR: Honorarium/Vacant has already reached its maximum hours. Please try agian. ")
+        }
+        if (alertVariable == "FILE_UPLOAD_SUCCESSFUL") {
+          alert('Course have been imported successfully.')
+        }
       };
     </script>
   </head>
+  
   <body class="bg-tertiary-subtle">
     <form method="POST" enctype="multipart/form-data">
+      <input type="hidden" onload="adminAlert('{{alertType}}')">
       <div class="container-fluid" id="mainContainer">
         <div class="row pt-4">
           <div class="col-3"></div>
           <div class="alert alert-info col-6 mt-3" role="alert">
             {% for prof in professorData if prof[0] == current_professor %}
             <h5 class="text-center mt-3">
-              Schedule for <b>{{prof[1]}}</b> is available.
+              Load for <b>{{prof[1]}}</b> is available.
             </h5>
             <p class="text-center">See content below for details.</p>
             {% else %}
             <h5 class="text-center my-3">
-              Please select a professor to be scheduled.
+              Please select a professor to be loaded.
             </h5>
             {% endfor %}
           </div>
@@ -193,16 +251,11 @@
           <div class="row gx-3">
             <div class="col-4">
               <div class="bg-primary-subtle p-4 rounded-4">
-                <h3 class="text-center pb-3">Professor Details</h3>
+                <h3 class="text-center pb-3">Load Professor</h3>
                 <div class="form-floating">
-                  <select
-                    id="profDetails"
-                    class="form-select"
-                    name="professorDetails"
-                    style="height: 70px"
-                    onchange="hideDiv()"
-                  >
-                    <option default>- Select Professor -</option>
+                  {% if scheduleMode == 0 %}
+                  <select id="profDetails" class="form-select" name="professorDetails" style="height: 70px" onchange="checkProfessorSelection()">
+                    <option value="" {% if current_professor == "- Select Professor -" %} selected {% endif %} hidden>- Select Professor -</option>
                     {% for professors in professorData %}
                     <option value="{{ professors[0] }}" {% if professors[0] == current_professor %} selected="selected" {% endif %}>
                       {{ professors[1] }}
@@ -210,41 +263,44 @@
                     {% endfor %}
                   </select>
                   <label for="profDetails">Professor Name</label>
+                  {% endif %}
+
+                  <input type="hidden" id="hiddenProfessorDetails" name="hiddenProfessorDetails"/>
                 </div>
 
-                <p
-                  id="choiceLabel"
-                  class="pt-5 text-center"
-                  onloadstart="hideCheckSchedule()"
-                >
-                  Choose from the options:
-                </p>
+                <p id="choiceLabel" class="pt-5 text-center">Choose from the options:</p>
                 <div class="d-flex column-gap-3 justify-content-center">
-                  <button
-                    id="hiddenCheckSchedule"
-                    type="submit"
-                    name="btn"
-                    value="checkProfessorSchedule"
-                    class="btn btn-primary"
-                    onloadstart="hideCheckSchedule()"
-                    formnovalidate
-                  >
+                  <button id="hiddenCheckSchedule" type="submit" name="btn" value="checkProfessorSchedule" class="btn btn-primary" onloadstart="hideCheckSchedule()" onclick="setID()" formnovalidate disabled>
                     Schedule Courses
                   </button>
 
-                  <button
-                    id="hiddenHonorariumVacancy"
-                    type="submit"
-                    name="btn"
-                    value="setHonorariumVacantTime"
-                    class="btn btn-secondary"
-                    onloadstart="hideHonorariumVacancy()"
-                    formnovalidate
-                  >
+                  <button id="hiddenHonorariumVacancy" type="submit" name="btn" value="setHonorariumVacantTime" class="btn btn-secondary" onloadstart="hideHonorariumVacancy()" onclick="setID()" formnovalidate disabled>
                     Honorarium/Vacancy
                   </button>
                 </div>
 
+                <!-- JavaScript to disable buttons if - Select Professor - is in the placeholder -->
+                <script>
+                  function checkProfessorSelection() {
+                    var selectElement = document.getElementById("profDetails");
+                    var scheduleButton = document.getElementById("hiddenCheckSchedule");
+                    var honorariumButton = document.getElementById("hiddenHonorariumVacancy");
+                    
+                    var hiddenProf = document.getElementById("hiddenProfessorDetails")
+                    var valueProf = selectElement.value
+                    hiddenProf.setAttribute("value", valueProf)
+                    console.log(hiddenProf.value)
+
+                    if (selectElement.value === "- Select Professor -") {
+                      scheduleButton.disabled = true;
+                      honorariumButton.disabled = true;
+                    } else {
+                      scheduleButton.disabled = false;
+                      honorariumButton.disabled = false;
+                    }
+                  }
+                </script>
+                                
                 <div class="pt-3 hidden" id="hiddenDiv">
                   {% if current_professor != 0 and scheduleMode == 1 %}
                   <div class="row">
@@ -283,6 +339,15 @@
                       </div>
                     </div>
                   </div>
+                  <!-- added dropbox for course duration-->
+                  <div class="form-floating mb-3">
+                    <select class="form-select" name="courseDuration" id="courseDuration">
+                        <option value="1.5">Set 1.5 Hrs</option>
+                        <option value="3">Set 3 Hrs</option>
+                    </select>
+                    <label for="courseDuration">Course Duration</label>
+                </div>
+
                   <div class="row">
                     <div class="col-6 mb-3">
                       <div class="form-floating">
@@ -332,14 +397,12 @@
                     <div class="col-6 mb-3">
                       <div class="form-floating">
                         <div class="form-floating">
-                          <input
-                            type="text"
-                            class="form-control"
-                            id="floatingInput"
-                            name="courseRoom"
-                            placeholder="Room"
-                          />
-                          <label for="floatingInput">Room</label>
+                          <select class="form-select" required name="roomType" id="roomChoice" onchange="specifyRoom()">
+                            <option default></option>
+                            <option value="F2F">Face-To-Face</option>
+                            <option value="Virtual">Virtual</option>
+                          </select>
+                          <label for="floatingPassword">Room Type</label>
                         </div>
                       </div>
                     </div>
@@ -355,6 +418,18 @@
                           <option value="Saturday">Saturday</option>
                         </select>
                         <label for="floatingPassword">Day of Week</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="row" id="roomDiv" style="display: none;">
+                    <div class="mb-3">
+                      <div class="form-floating">
+                        <select class="form-select" name="courseRoom">
+                          <option default></option>
+                          <option value=""></option>
+                        </select>
+                        <label for="floatingPassword">Room</label>
                       </div>
                     </div>
                   </div>
@@ -494,8 +569,7 @@
             <div class="col-8">
               <div class="bg-primary-subtle p-4 rounded-4">
                 {% for prof in professorData if prof[0] == current_professor %}
-                <h3 class="text-center">Schedule for <b>{{prof[1]}}</b></h3>
-
+                <h3 class="text-center">Load for <b>{{prof[1]}}</b></h3>
                 <div class="container">
                   <!-- TABLE HTML CODE (IT'S NOT EFFICIENT, BUT IT WORKS, PLEASE EDIT WITH CAUTION!)-->
                   <div>
@@ -518,7 +592,7 @@
                           sched[6].strftime('%H:%M:%S') == '07:30:00' and
                           sched[7].strftime('%H:%M:%S') == '09:00:00' and sched[2]
                           == current_professor %}
-                          <td>{{ sched[1] }} {{ sched[3] }} {{ sched[4] }}</td>
+                          <td>{{sched[1]}}<br/>{{sched[3]}}<br/>{{sched[4]}}</td>
                           {% else %}
                           <td>-</td>
                           {% endfor %} {% for sched in scheduleData if sched[5] ==
@@ -973,7 +1047,30 @@
                   </div>
                   {% else %}
                   <div class="alert alert-info border-3 text-center">
-                    No schedule to be displayed.
+                    <h3>CBFS COURSE OFFERINGS</h3>
+                    <table class="table">
+                      <thead>
+                        <tr>
+                          <th scope="col">Course Code</th>
+                          <th scope="col">Course Name</th>
+                          <th scope="col">Year Level & Department</th>
+                          <th scope="col">Units</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for course in course_offerings %}
+                        <tr>
+                          <td>{{ course[0] }}</td>
+                          <td>{{ course[1] }}</td>
+                          <td>{{ course[2] }}</td>
+                          <td>{{ course[3] }}</td>
+                          </form>                        
+                          </td>
+                          </td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
                   </div>
                   {% endfor %}
 
@@ -986,7 +1083,7 @@
                   >
                     <div class="row">
                       <div class="col d-flex justify-content-start">
-                        <h5 class="py-2">Administrator Options</h5>
+                        <h5 class="py-2">Manage Courses</h5>
                       </div>
                     </div>
 
@@ -1002,8 +1099,17 @@
                           data-bs-toggle="modal"
                           data-bs-target="#chooseAddMode"
                         >
-                          Add New Course
+                          Add New Courses
                         </button>
+                      </div>
+                      <div class="col-2 py-4">
+                        <button
+                          type="button"
+                          class="btn btn-secondary"
+                          data-bs-toggle="modal"
+                          data-bs-target="#manageRooms"
+                        >
+                          Manage Rooms
                       </div>
                       <div class="col-2 py-4">
                         <button
@@ -1012,7 +1118,7 @@
                           data-bs-toggle="modal"
                           data-bs-target="#manageExistingCourses"
                         >
-                          Delete A Course
+                          Delete Courses
                         </button>
                       </div>
                       
@@ -1048,6 +1154,17 @@
                             data-bs-target="#deleteCurrentAccount"
                           >
                             Delete Account
+                          </button>
+                        </div>
+                        <div class="col-2 py-4" id="deleteAccountDiv">
+                          <button
+                            type="submit"
+                            name="btn"
+                            value="resetSchedule"
+                            class="btn btn-primary"
+                            formnovalidate
+                          >
+                            Reset Schedule
                           </button>
                         </div>
                       {% endfor %}
@@ -1089,7 +1206,7 @@
                 <div class="col">
                   <button 
                     type="button" 
-                    class="btn btn-secondary" 
+                    class="btn btn-success" 
                     data-bs-toggle="modal"
                     data-bs-target="#importExcel"
                   >
@@ -1149,17 +1266,37 @@
                   </div>
                 </div>
               </div>
-              <div class="form-floating mb-3">
-                <input
-                  type="text"
-                  class="form-control"
-                  id="floatingPassword"
-                  name="courseName"
-                  placeholder="Foundation of Shorthand"
-                  style="height: 70px"
-                />
-                <label for="floatingPassword">Course Name</label>
+              
+              <div class="row">
+                <div class="col mb-3">
+                  <div class="form-floating">
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="floatingPassword"
+                      name="courseName"
+                      placeholder="Foundation of Shorthand"
+                      style="height: 70px"
+                    />
+                    <label for="floatingPassword">Course Name</label>
+                  </div>
+                </div>
+                <div class="col mb-3">
+                  <div class="form-floating">
+                    <select
+                      class="form-select"
+                      name="courseType"
+                      style="height: 70px"
+                    >
+                      <option value=""></option>
+                      <option value="Major">Major</option>
+                      <option value="GenEd">Gen. Ed.</option>
+                    </select>
+                    <label for="floatingPassword">Course Type</label>
+                  </div>
+                </div>
               </div>
+
               <div class="form-floating mb-3">
                 <select
                   class="form-select"
@@ -1216,7 +1353,7 @@
                 <div class="col">
                   <div class="input-group">
                     <input type="file" name="file" value="file" class="form-control" id="file" aria-describedby="inputGroupFileAddon04" aria-label="Upload"/>
-                    <button class="btn btn-success" type="submit" name="btn" value="uploadExcel" id="inputGroupFileAddon04">Upload</button>
+                    <button class="btn btn-success" formnovalidate type="submit" name="btn" value="uploadExcel" id="inputGroupFileAddon04">Upload</button>
                   </div>
                 </div>
               </div>
@@ -1235,10 +1372,10 @@
         </div>
       </div>
 
-      <!-- SELECTING COURSES TO MANAGE -->
+      <!-- ROOM MANAGEMENT MODAL -->
       <div
         class="modal fade"
-        id="manageExistingCourses"
+        id="manageRooms"
         tabindex="-1"
         aria-labelledby="exampleModalLabel"
         aria-hidden="true"
@@ -1246,101 +1383,142 @@
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
             <div class="modal-header">
-              <h1 class="modal-title fs-5" id="exampleModalLabel">
-                Select Course
-              </h1>
+              <h1 class="modal-title fs-5" id="exampleModalLabel">Choose Management Option</h1>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-              <div class="row">
-                <div>
-                  <div class="form-floating">
-                    <select
-                      id="current_course"
-                      class="form-select"
-                      name="courseToBeDeleted"
-                      onchange="loadCourseInformation()"
-                    >
-                      <option selected>- Select a course -</option>
-                      {% for prof_courses in courseData %}
-                      <option value="{{prof_courses[0]}}">
-                        {{ prof_courses[0] }}
-                      </option>
-                      {% endfor %}
-                    </select>
-                    <label for="current_course">Course to be deleted</label>
-                  </div>
+              <div class="row text-center">
+                <div class="col">
+                  <button 
+                    type="button" 
+                    class="btn btn-success" 
+                    data-bs-toggle="modal"
+                    data-bs-target="#addRooms"
+                  >
+                    Add Room for Scheduling
+                  </button>
+                </div>
+                <div class="col">
+                  <button 
+                    type="submit"
+                    formnovalidate
+                    name="btn"
+                    value="test"
+                    class="btn btn-primary" 
+                    data-bs-toggle="modal"
+                    data-bs-target="#updateRooms"
+                  >
+                    Update Existing Room
+                  </button>
+                </div>
+                <div class="col">
+                  <button 
+                    type="button" 
+                    class="btn btn-danger" 
+                    data-bs-toggle="modal"
+                    data-bs-target="#deleteRooms"
+                  >
+                    Delete Existing Room
+                  </button>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal fade" id="deleteRooms" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg"> 
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="exampleModalLabel">Delete Rooms</h1>
+            </div>
+            <!-- v Set the height and added a scrollbar v -->
+            <div class="modal-body" style="max-height: 400px; overflow-y: auto;"> 
+              <div class="row">
+                <div>
+                    <div class="form-floating">
+                      <!-- v Adjusted font-size and height to fit all courses v -->
+                        <select id="current_courses" class="form-select form-select-lg" name="coursesToBeDeleted" multiple style="font-size: 1.2em; height: 300px;"> 
+                            {% for room in roomData %}
+                            {% if room[1] != '' %}
+                            <option value="{{ prof_courses[0] }}">{{ prof_courses[1] }}</option>
+                            {% endif %}
+                            {% endfor %}
+                         </select>
+                        <label for="current_courses">Click and Drag to Select</label>
+                     </div>
+                </div>
+            </div>
+         </div>
             <div class="modal-footer">
-              <button
-                type="button"
-                class="btn btn-secondary"
-                data-bs-dismiss="modal"
-              >
-                Close
-              </button>
-              <button
-                type="button"
-                name="btn"
-                class="btn btn-danger"
-                data-bs-target="#deleteCourse"
-                data-bs-toggle="modal"
-              >
-                Delete Course
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="button" name="btn" class="btn btn-danger" data-bs-target="#deleteCoursesModal" data-bs-toggle="modal">
+                Delete Rooms
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- (Confirmation Options for Adding Courses and Selection of Courses)-->
-      <div
-        class="modal fade"
-        id="deleteCourse"
-        aria-hidden="true"
-        aria-labelledby="exampleModalToggleLabel2"
-        tabindex="-1"
-      >
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h1 class="modal-title fs-5" id="exampleModalToggleLabel2">
-                Confirm Changes
-              </h1>
-              <button
-                type="button"
-                class="btn-close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              ></button>
-            </div>
-            <div class="modal-body">
-              Are you sure you want to delete this course?
-            </div>
-            <div class="modal-footer">
-              <button
-                type="submit"
-                name="btn"
-                class="btn btn-primary"
-                data-bs-dismiss="modal"
-                value="deleteCourse"
-                formnovalidate
-              >
-                Yes, delete it
-              </button>
-              <button
-                class="btn btn-secondary"
-                type="button"
-                data-bs-toggle="modal"
-                data-bs-target="#manageExistingCourses"
-              >
-                No
-              </button>
-            </div>
-          </div>
-        </div>
+      
+
+<!-- SELECTING COURSES TO MANAGE -->
+<div class="modal fade" id="manageExistingCourses" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg"> 
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="exampleModalLabel">Delete Courses</h1>
       </div>
+      <!-- v Set the height and added a scrollbar v -->
+      <div class="modal-body" style="max-height: 400px; overflow-y: auto;"> 
+        <div class="row">
+          <div>
+              <div class="form-floating">
+                <!-- v Adjusted font-size and height to fit all courses v -->
+                  <select id="current_courses" class="form-select form-select-lg" name="coursesToBeDeleted" multiple style="font-size: 1.2em; height: 300px;"> 
+                      {% for prof_courses in courseData %}
+                      {% if prof_courses[0] != '' %}
+                      <option value="{{ prof_courses[0] }}">{{ prof_courses[0] }}</option>
+                      {% endif %}
+                      {% endfor %}
+                   </select>
+                  <label for="current_courses">Click and Drag to Select</label>
+               </div>
+          </div>
+      </div>
+   </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" name="btn" class="btn btn-danger" data-bs-target="#deleteCoursesModal" data-bs-toggle="modal">
+          Delete Courses
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- (Confirmation Options for Adding Courses and Selection of Courses)-->
+<div class="modal fade" id="deleteCoursesModal" aria-hidden="true" aria-labelledby="exampleModalToggleLabel2" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="exampleModalToggleLabel2">Confirm Changes</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to delete the selected courses?
+      </div>
+      <div class="modal-footer">
+        <button type="submit" name="btn" class="btn btn-primary" data-bs-dismiss="modal" value="deleteCourses" formnovalidate>
+          Yes, delete them
+        </button>
+        <button class="btn btn-secondary" type="button" data-bs-toggle="modal" data-bs-target="#manageExistingCourses">No</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
       <div
         class="modal fade"
@@ -1483,17 +1661,12 @@
       </div>
 
       <div class="py-5 container text-center">
-        <h3>User Request Tab</h3>
+        <h3>Faculty Concerns Tab</h3>
         <hr>
         <button type="submit" name="btn" value="inquiries" formnovalidate class="btn btn-primary text-center pt-2">
-          <h5>See Requests</h5>
+          <h5>See Concerns</h5>
         </button>
       </div>
-
-      <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-        99+
-        <span class="visually-hidden">unread messages</span>
-      </span>
 
     </form>
   </body>
